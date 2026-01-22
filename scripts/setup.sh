@@ -54,34 +54,38 @@ link_gemini() {
 # If .agent exists as a dir (not symlink), we assume it's a project with local memories.
 # In that case, we link skills INSIDE it.
 link_agent() {
-    echo "🔗 Linking .agent skills..."
-    
-    CORE_SKILLS="$ROOT_DIR/.agent/skills"
-    
-    # Check target .agent
-    if [ -d "$TARGET_DIR/.agent" ] && [ ! -L "$TARGET_DIR/.agent" ]; then
-        echo "   ℹ️  Detected existing local .agent directory (Hybrid Mode)."
-        
-        # Ensure skills directory exists or is linkable
-        if [ -d "$TARGET_DIR/.agent/skills" ] && [ ! -L "$TARGET_DIR/.agent/skills" ]; then
-             echo "   🗑️  Removing local skills folder to replace with link..."
-             rm -rf "$TARGET_DIR/.agent/skills"
-        fi
-        
-        ln -sf "$CORE_SKILLS" "$TARGET_DIR/.agent/skills"
-        echo "   ✅ Linked: $TARGET_DIR/.agent/skills -> $CORE_SKILLS"
-        
-    else
-        # Standard Mode (Link entire .agent or create it)
-        if [ -L "$TARGET_DIR/.agent" ]; then
-             # Update existing link
-             ln -sf "$ROOT_DIR/.agent" "$TARGET_DIR/.agent"
-             echo "   ✅ Updated Link: $TARGET_DIR/.agent"
-        else
-             ln -sf "$ROOT_DIR/.agent" "$TARGET_DIR/.agent"
-             echo "   ✅ Linked: $TARGET_DIR/.agent -> $ROOT_DIR/.agent"
-        fi
+    # Function to link individual skills (Overlay Mode)
+    # This allows the project to have its own local skills alongside shared ones.
+    if [ ! -d "$TARGET_DIR/.agent/skills" ]; then
+        mkdir -p "$TARGET_DIR/.agent/skills"
     fi
+
+    # Check if target is a symlink (Legacy Mode) - if so, convert to directory
+    if [ -L "$TARGET_DIR/.agent/skills" ]; then
+        echo "   🔄 Converting '.agent/skills' from symlink to directory (for Overlay support)..."
+        rm "$TARGET_DIR/.agent/skills"
+        mkdir -p "$TARGET_DIR/.agent/skills"
+    fi
+
+    echo "   🔗 Linking Core Skills..."
+    for skill_path in "$CORE_SKILLS"/*; do
+        if [ -d "$skill_path" ]; then
+            skill_name=$(basename "$skill_path")
+            target_skill="$TARGET_DIR/.agent/skills/$skill_name"
+            
+            # Link only if not explicitly overridden (if a real dir exists, keep it)
+            if [ ! -e "$target_skill" ]; then
+                ln -sf "$skill_path" "$target_skill"
+                # echo "      Linked: $skill_name"
+            elif [ -L "$target_skill" ]; then
+                # Update link if it exists
+                ln -sf "$skill_path" "$target_skill"
+            else
+                echo "      ⚠️  Skipping shared skill '$skill_name' (Local override detected)"
+            fi
+        fi
+    done
+    echo "   ✅ Core skills linked. You can now add local skills to .agent/skills/"
 }
 
 # Execution
