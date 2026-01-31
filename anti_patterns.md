@@ -81,8 +81,31 @@ function debugLog(message: string): void {
 
 ---
 
+
+---
+
+## パス・環境依存
+
+### AP-005: Absolute Path Hardcoding (絶対パスのハードコード)
+- **問題**: ソースコード内に `/home/user/...` といった環境依存の絶対パスが直接記述されている
+- **影響**: 開発者間やCI環境、サーバー移行時に動作しなくなる（ポータビリティの欠如）
+- **解決策**: `pathlib` による相対パス解決、または設定ファイル (`config.yaml`) で管理する
+
+```python
+# ❌ 悪い例
+db_path = "/home/irom/project-stock2/data/stock.db"
+
+# ✅ 良い例
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+db_path = BASE_DIR / "data" / "stock.db"
+```
+
+---
+
 ## 更新履歴
 
 | 日付 | ID | 追加者 | 概要 |
 |------|-----|--------|------|
 | 2026-01-31 | AP-001〜004 | Agent | 初期登録（discord-server リファクタリングより） |
+| 2026-01-31 | AP-005 | Agent | 絶対パスのハードコード禁止 (inspect_db.py調査より) |
