@@ -46,9 +46,18 @@ GEMINI.md 第7章「コマンド実行の安全性」に基づき、シェルイ
       git add full_context/
       ```
 
-### 3. コミット実行 (Execute Commit)
+3.  **アンチパターンチェック (Anti-Pattern Check)**:
 
-### 3. コミット実行 (Execute Commit)
+    > [!IMPORTANT]
+    > `.gemini/anti_patterns.md` を参照し、変更コードに該当パターンがないか確認すること。
+    
+    **手順**:
+    1. `.gemini` サブモジュールを `git pull` して最新化
+    2. `anti_patterns.md` の各パターンをチェック
+    3. 該当があれば修正してからコミット
+
+
+### 4. コミット実行 (Execute Commit)
 
 1.  **コミットの実行**:
     - 以下のMCPツールを呼び出し、コミットを実施します。
@@ -56,7 +65,7 @@ GEMINI.md 第7章「コマンド実行の安全性」に基づき、シェルイ
       - `message`: "[Prefix]: [Title]\n\n[Details]"
     - ※このツールは自動的に一時ファイル作成と安全なコミット処理を行います。
 
-### 4. プッシュと完了確認（Push & Verify）
+### 5. プッシュと完了確認（Push & Verify）
 
 1.  **リモートへのプッシュ**:
     - リモートにプッシュします（これまで通り `run_command` を使用、または将来的に `git_push` ツール実装時はそちらを使用）。
