@@ -148,19 +148,29 @@
 
 ---
 
-## 8. グローバル設定とファイル配置 (Configuration & File Structure)
+## 8. コンテキスト管理とガバナンス (Context Management & Governance)
 
-本プロジェクトでは **XDG Base Directory** の思想に基づき、設定ファイルを一元管理する。
+本プロジェクトでは、`gemini-core` リポジトリを「唯一の正解（Single Source of Truth）」とし、全プロジェクトのルールとコンテキストを一元管理する。
 
-### 8.1 共通設定ファイル (`GEMINI.md`)
-*   **実体:** `.config/google-antigravity/GEMINI.md`
-*   **運用:**
-    *   このファイルを「唯一の正解（Single Source of Truth）」とする。
-    *   各プロジェクト（リポジトリ）のルートには、このファイルへの**シンボリックリンク**を作成する。
-    *   新規プロジェクト作成時は、必ず以下のコマンドでリンクを張ること。
-        ```bash
-        ln -sf /path/to/.config/google-antigravity/GEMINI.md ./GEMINI.md
-        ```
+### 8.1 司令塔構造 (Centralized Command)
+*   **司令塔 (Core):** `/home/irom/dev/gemini-core`
+    *   **役割:** 全体方針、ルール (`GEMINI.md`)、スキル、共有ワークフローの策定と管理。
+    *   **権限:** **書き込み可能 (Read/Write)**。ルールの変更は必ずここで行う。
+*   **現場 (Projects):** `mcp-servers`, `project-stock2`, `salesforce` 等
+    *   **役割:** ルールの適用と遵守。
+    *   **権限:** **読み取り専用 (Read-Only)**。`.gemini` サブモジュール内の直接編集は禁止され、物理的にブロック（`chmod a-w`）される。
 
-### 8.2 Google Drive 同期 (推奨)
-*   実体を Google Drive (`~/Google Drive/Config/GEMINI.md`) に置き、`.config/google-antigravity/` からそこにリンクを張ることで、OS間（Mac/Windows）でルールを完全同期できる。
+### 8.2 運用フロー (Operational Workflow)
+1.  **ルール変更:**
+    *   `gemini-core` リポジトリでファイルを修正し、コミット・Pushする。
+2.  **全軍適用:**
+    *   任意のプロジェクトで `/sync-gemini` ワークフローを実行する。
+    *   全プロジェクトのサブモジュールが更新され、読み取り専用モードで再配置される。
+
+### 8.3 新規プロジェクトの作成
+新規プロジェクトを作成する際は、必ず `.gemini` をサブモジュールとして追加し、司令塔の配下に置くこと。
+
+```bash
+git submodule add https://github.com/akkyey/gemini-core.git .gemini
+/sync-gemini  # 初期化・固定化
+```

@@ -19,20 +19,20 @@ description: .gemini サブモジュールを最新化する
 ### 1. mcp-servers の .gemini を更新
 
 ```bash
-cd /home/irom/dev/mcp-servers/.gemini && git pull origin main
+cd /home/irom/dev/mcp-servers/.gemini && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit
 ```
 
 ### 2. project-stock2 の .gemini を更新
 
 ```bash
 # プロジェクトルートに移動
-cd "$(git rev-parse --show-toplevel)/.gemini" && git pull origin main 2>/dev/null || echo "サブモジュール未設定"
+cd "$(git rev-parse --show-toplevel)/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "サブモジュール未設定"
 ```
 
 ### 3. salesforce の .gemini を更新
 
 ```bash
-cd /home/irom/dev/salesforce/.gemini && git pull origin main 2>/dev/null || echo "サブモジュール未設定"
+cd /home/irom/dev/salesforce/.gemini && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "サブモジュール未設定"
 ```
 
 ### 4. 完了通知

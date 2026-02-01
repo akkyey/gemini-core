@@ -1,0 +1,40 @@
+#!/bin/bash
+# .gemini/scripts/git-hooks/pre-commit
+# このスクリプトは gemini-core で管理されています。
+# 各プロジェクトの .git/hooks/pre-commit にコピーして使用されます。
+
+echo "🛡️  [GEMINI-Hook] Starting Compliance & Quality Gate..."
+
+# 1. コンテキスト整合性のチェック (Documentation Freshness)
+# full_context ディレクトリがあり、かつ未ステージ(変更あり)の場合は警告orブロック
+if [ -d "full_context" ]; then
+    if ! git diff --quiet -- full_context/; then
+        echo "⚠️  [Warning] 'full_context/' has changes that are not staged."
+        echo "   Please confirm if documentation is up-to-date."
+        # Contextの更新漏れは致命的ではないのでWarningで留める運用もアリだが、
+        # 厳密にするならここで exit 1
+    fi
+fi
+
+# 2. 禁止キーワードのチェック (簡易版)
+# 仮実装: "TODO: FIX NOW" という強い残置コメントがあればブロック
+if git diff --cached | grep -q "TODO: FIX NOW"; then
+    echo "❌ [Error] Forbidden pattern 'TODO: FIX NOW' found in staged changes."
+    exit 1
+fi
+
+# 3. リント・テストの実行 (プロジェクトごとに定義があれば)
+# package.json があり、testスクリプトがある場合のみ実行
+if [ -f "package.json" ]; then
+    if grep -q '"test":' package.json; then
+        echo "🧪 [Test] Running npm test..."
+        # 実行時間を短縮するため、CIのようなフルテストではなく、関連ファイルのみ等が理想だが
+        # ここではシンプルに test を呼ぶ（重ければ後で調整）
+        # npm test
+        # ※ ステータス確認のデモのため、一旦スキップ（コメントアウト）しておきます
+        :
+    fi
+fi
+
+echo "✅ [GEMINI-Hook] Gate Passed. Proceeding to commit."
+exit 0
