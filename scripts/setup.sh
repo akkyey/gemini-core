@@ -68,6 +68,7 @@ link_agent() {
     fi
 
     echo "   🔗 Linking Core Skills..."
+    CORE_SKILLS="$ROOT_DIR/.agent/skills"
     for skill_path in "$CORE_SKILLS"/*; do
         if [ -d "$skill_path" ]; then
             skill_name=$(basename "$skill_path")

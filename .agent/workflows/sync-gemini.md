@@ -8,9 +8,9 @@ description: .gemini サブモジュールを最新化する
 
 ## 対象プロジェクト
 
-1. `/home/irom/mcp-servers` (メイン)
-2. `/home/irom/project-stock2`
-3. `/home/irom/salesforce`
+1. `/home/dev/mcp-servers` (メイン)
+2. `/home/dev/project-stock2` (または現在のディレクトリ)
+3. `/home/dev/salesforce`
 
 ## 実行手順
 
@@ -19,19 +19,20 @@ description: .gemini サブモジュールを最新化する
 ### 1. mcp-servers の .gemini を更新
 
 ```bash
-cd /home/irom/mcp-servers/.gemini && git pull origin main
+cd /home/dev/mcp-servers/.gemini && git pull origin main
 ```
 
 ### 2. project-stock2 の .gemini を更新
 
 ```bash
-cd /home/irom/project-stock2/.gemini && git pull origin main 2>/dev/null || echo "サブモジュール未設定"
+# プロジェクトルートに移動
+cd "$(git rev-parse --show-toplevel)/.gemini" && git pull origin main 2>/dev/null || echo "サブモジュール未設定"
 ```
 
 ### 3. salesforce の .gemini を更新
 
 ```bash
-cd /home/irom/salesforce/.gemini && git pull origin main 2>/dev/null || echo "サブモジュール未設定"
+cd /home/dev/salesforce/.gemini && git pull origin main 2>/dev/null || echo "サブモジュール未設定"
 ```
 
 ### 4. 完了通知
