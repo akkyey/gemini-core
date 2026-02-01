@@ -126,6 +126,7 @@ cd .gemini && git pull origin main && cd ..
 2.  **ブログネタの逐次記録 (Continuous Blog Idea Capture):**
     *   **「一区切り」ごとに、開発の経緯、苦労した点、得られた知見を `blog/ideas/YYYY-MM-DD_ideas.md` に追記すること。**
     *   特に、プロジェクトの移行、言語の変更、環境構築のトラブルなどの「ライブ感」のある情報を重視せよ。
+    *   **全体に共有すべき重要な「教訓」や「ルール化すべき事項」が見つかった場合は、直ちに `.agent/local_insights.md` にも記録すること。**
     *   タスクの完了報告 (`notify_user`) を行う前に、必ずこの記録が更新されているか確認すること。
 
 ---
@@ -190,3 +191,25 @@ cd .gemini && git pull origin main && cd ..
 git submodule add https://github.com/akkyey/gemini-core.git .gemini
 /sync-gemini  # 初期化・固定化
 ```
+
+---
+
+## 9. 知見の還流とガバナンスの進化 (Insight Feedback Loop)
+
+各プロジェクト（現場）で得られた個別の知見を、組織全体（gemini-core）の共通ルールへと昇格させる仕組みを定義する。
+
+### 9.1 知見の蓄積 (Local Buffer)
+*   各プロジェクトの **`.agent/local_insights.md`** を一時的な蓄積場所（Inbox）とする。
+*   エージェントは、作業中に「汎用的なルールにすべき」と判断した事象があれば、即座にここにメモを残す。
+*   長期記憶 (`memory-server`) への即時書き込みも並行して行うこと。
+
+### 9.2 知見の収集と昇格 (Promotion)
+*   管理用ワークフロー **`/promote-insights`** を使用し、各プロジェクトの `local_insights.md` を一括収集する。
+*   収集された知見はエージェントによって整理され、以下の宛先へ振り分けられる。
+    *   **共通ルール変更**: `GEMINI.md`
+    *   **全社的禁止事項**: `anti_patterns.md`
+    *   **標準スキル改善**: `.agent/skills/*.md`
+*   マスタへの反映後、`/sync-gemini` を通じて全プロジェクトへ再配布される。
+
+### 9.3 完了の定義 (Definition of Done)
+*   マスタへの反映が完了した後、現場の `local_insights.md` はクリア（またはアーカイブ）され、次の蓄積サイクルに備えること。
