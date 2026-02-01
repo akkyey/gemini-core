@@ -22,4 +22,5 @@ echo "=== gemini-core ===" && cd "${CORE_ROOT}" && git status -s -b
 echo "=== mcp-servers ===" && cd "${DEV_ROOT}/mcp-servers" && git status -s -b
 echo "=== project-stock2 ===" && cd "${DEV_ROOT}/project-stock2" && git status -s -b
 echo "=== salesforce ===" && cd "${DEV_ROOT}/salesforce" && git status -s -b
+echo "=== gemini-docs ===" && cd "${DEV_ROOT}/gemini-docs" && git status -s -b
 ```

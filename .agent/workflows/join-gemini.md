@@ -37,9 +37,25 @@ mkdir -p .agent/workflows
 CORE_ROOT=$(git rev-parse --show-toplevel)
 cp "${CORE_ROOT}/.agent/workflows/sync-gemini.md" .agent/workflows/
 cp "${CORE_ROOT}/.agent/workflows/check-all-status.md" .agent/workflows/
+
+### 2. ドキュメント環境の整備
+
+新しいプロジェクト用のドキュメントフォルダを作成し、スコープ規約を更新します。
+
+```bash
+# gemini-docs のルートを特定
+CORE_ROOT=$(git rev-parse --show-toplevel)
+DOCS_ROOT=$(cd "${CORE_ROOT}/../gemini-docs"; pwd)
+
+# フォルダ作成
+mkdir -p "${DOCS_ROOT}/projects/<PROJECT_NAME>"
+touch "${DOCS_ROOT}/projects/<PROJECT_NAME>/README.md"
+
+# スコープ規約の更新 (SCOPE_RULES.md に対応表を追記してください)
+echo "| \`projects/<PROJECT_NAME>/\` | \`\$GEMINI_ROOT/<PROJECT_NAME>\` のみ |" >> "${DOCS_ROOT}/SCOPE_RULES.md"
 ```
 
-### 2. 司令塔への登録 (Core Registration)
+### 3. 司令塔への登録 (Core Registration)
 
 `gemini-core` 側の管理ファイルを更新し、このプロジェクトを認識させます。
 

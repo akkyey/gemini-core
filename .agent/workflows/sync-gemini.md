@@ -13,7 +13,8 @@ description: .gemini サブモジュールを最新化する
 1.  `mcp-servers`
 2.  `project-stock2`
 3.  `salesforce`
-4.  (その他 `projects.json` に追記されたもの)
+4.  `gemini-docs`
+5.  (その他 `projects.json` に追記されたもの)
 
 ## 実行手順
 
@@ -42,6 +43,9 @@ cd "${DEV_ROOT}/project-stock2/.gemini" && git pull origin main && chmod -R a-w 
 
 # 例: salesforce の場合
 cd "${DEV_ROOT}/salesforce/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "salesforce: サブモジュール未設定またはフォルダ不在"
+
+# 例: gemini-docs の場合
+cd "${DEV_ROOT}/gemini-docs/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "gemini-docs: サブモジュール未設定またはフォルダ不在"
 ```
 
 ### 4. 完了通知
