@@ -13,10 +13,14 @@ description: 各プロジェクトの知見を一括収集し、グローバル�
 以下のコマンドを実行して、各プロジェクトの `local_insights.md` の内容を表示します。
 
 ```bash
-# 収集対象リスト
-echo "=== [mcp-servers] ===" && cat /home/irom/dev/mcp-servers/.agent/local_insights.md 2>/dev/null || echo "(no file)"
-echo "=== [project-stock2] ===" && cat /home/irom/dev/project-stock2/.agent/local_insights.md 2>/dev/null || echo "(no file)"
-echo "=== [salesforce] ===" && cat /home/irom/dev/salesforce/.agent/local_insights.md 2>/dev/null || echo "(no file)"
+# gemini-core のルートを特定
+CORE_ROOT=$(git rev-parse --show-toplevel)
+DEV_ROOT=$(cd "${CORE_ROOT}/.."; pwd)
+
+# 収集対象リスト (AIは事前に projects.json を確認し、以下の巡回を自動で行ってください)
+echo "=== [mcp-servers] ===" && cat "${DEV_ROOT}/mcp-servers/.agent/local_insights.md" 2>/dev/null || echo "(no file)"
+echo "=== [project-stock2] ===" && cat "${DEV_ROOT}/project-stock2/.agent/local_insights.md" 2>/dev/null || echo "(no file)"
+echo "=== [salesforce] ===" && cat "${DEV_ROOT}/salesforce/.agent/local_insights.md" 2>/dev/null || echo "(no file)"
 ```
 
 ### 2. 内容の精査と分類
@@ -29,16 +33,20 @@ AIエージェントは、収集した内容を以下の3つに分類します�
 
 ### 3. マスタへの反映
 
-分類された情報を `/home/irom/dev/gemini-core/` 内の該当ファイルに手動またはAIエージェントによって反映します。
+分類された情報を `gemini-core` 内の該当ファイル（原本）に反映します。
+原本ディレクトリは `$(git rev-parse --show-toplevel)` で動的に特定してください。
 
 ### 4. 反映後のクリーンアップ
 
 マスタへの反映（コミット・Push）が完了したら、各プロジェクトの `local_insights.md` をリセットして空にします。
 
 ```bash
-truncate -s 0 /home/irom/dev/mcp-servers/.agent/local_insights.md
-truncate -s 0 /home/irom/dev/project-stock2/.agent/local_insights.md
-truncate -s 0 /home/irom/dev/salesforce/.agent/local_insights.md
+CORE_ROOT=$(git rev-parse --show-toplevel)
+DEV_ROOT=$(cd "${CORE_ROOT}/.."; pwd)
+
+truncate -s 0 "${DEV_ROOT}/mcp-servers/.agent/local_insights.md" 2>/dev/null
+truncate -s 0 "${DEV_ROOT}/project-stock2/.agent/local_insights.md" 2>/dev/null
+truncate -s 0 "${DEV_ROOT}/salesforce/.agent/local_insights.md" 2>/dev/null
 ```
 
 ### 5. 全軍同期

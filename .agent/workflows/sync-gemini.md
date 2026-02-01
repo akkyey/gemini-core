@@ -8,31 +8,40 @@ description: .gemini サブモジュールを最新化する
 
 ## 対象プロジェクト
 
-1. `/home/irom/dev/mcp-servers` (メイン)
-2. `/home/irom/dev/project-stock2` (または現在のディレクトリ)
-3. `/home/irom/dev/salesforce`
+`projects.json` に登録されているすべてのプロジェクトが対象となります。
+
+1.  `mcp-servers`
+2.  `project-stock2`
+3.  `salesforce`
+4.  (その他 `projects.json` に追記されたもの)
 
 ## 実行手順
 
 // turbo-all
 
-### 1. mcp-servers の .gemini を更新
+### 1. 各プロジェクトの .gemini サブモジュールを同期
+
+原本（`gemini-core`）から各プロジェクトへルールとHooksを配布・適用します。
 
 ```bash
-cd /home/irom/dev/mcp-servers/.gemini && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit
-```
+# gemini-core のルートを特定
+CORE_ROOT=$(git rev-parse --show-toplevel)
+DEV_ROOT=$(cd "${CORE_ROOT}/.."; pwd)
 
-### 2. project-stock2 の .gemini を更新
+# projects.json を読み込み（AIは事前に内容を確認してください）
+# 各プロジェクトに対して以下の処理を繰り返します：
+# 1. git pull
+# 2. chmod -R a-w
+# 3. git hooks 適用
 
-```bash
-# プロジェクトルートに移動
-cd "$(git rev-parse --show-toplevel)/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "サブモジュール未設定"
-```
+# 例: mcp-servers の場合
+cd "${DEV_ROOT}/mcp-servers/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "mcp-servers: サブモジュール未設定またはフォルダ不在"
 
-### 3. salesforce の .gemini を更新
+# 例: project-stock2 の場合
+cd "${DEV_ROOT}/project-stock2/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "project-stock2: サブモジュール未設定またはフォルダ不在"
 
-```bash
-cd /home/irom/dev/salesforce/.gemini && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "サブモジュール未設定"
+# 例: salesforce の場合
+cd "${DEV_ROOT}/salesforce/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "salesforce: サブモジュール未設定またはフォルダ不在"
 ```
 
 ### 4. 完了通知

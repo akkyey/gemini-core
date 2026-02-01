@@ -6,22 +6,20 @@ description: 全プロジェクトのGitステータスを一括確認する
 
 // turbo-all
 
-1. gemini-core のステータス
-```bash
-echo "=== gemini-core ===" && cd /home/irom/dev/gemini-core && git status -s -b
-```
+### 各プロジェクトのステータスを一括表示します
 
-2. mcp-servers のステータス
 ```bash
-echo "=== mcp-servers ===" && cd /home/irom/dev/mcp-servers && git status -s -b
-```
+# gemini-core のルートを特定
+CORE_ROOT=$(git rev-parse --show-toplevel)
+DEV_ROOT=$(cd "${CORE_ROOT}/.."; pwd)
 
-3. project-stock2 のステータス
-```bash
-echo "=== project-stock2 ===" && cd /home/irom/dev/project-stock2 && git status -s -b
-```
+# 司令塔のステータス
+echo "=== gemini-core ===" && cd "${CORE_ROOT}" && git status -s -b
 
-4. salesforce のステータス
-```bash
-echo "=== salesforce ===" && cd /home/irom/dev/salesforce && git status -s -b
+# projects.json に基づく各プロジェクトのステータス
+# (AIは事前に projects.json を確認し、以下の各ディレクトリを巡回してください)
+
+echo "=== mcp-servers ===" && cd "${DEV_ROOT}/mcp-servers" && git status -s -b
+echo "=== project-stock2 ===" && cd "${DEV_ROOT}/project-stock2" && git status -s -b
+echo "=== salesforce ===" && cd "${DEV_ROOT}/salesforce" && git status -s -b
 ```

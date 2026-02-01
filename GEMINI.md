@@ -170,12 +170,13 @@ cd .gemini && git pull origin main && cd ..
 本プロジェクトでは、`gemini-core` リポジトリを「唯一の正解（Single Source of Truth）」とし、全プロジェクトのルールとコンテキストを一元管理する。
 
 ### 8.1 司令塔構造 (Centralized Command)
-*   **司令塔 (Core):** `/home/irom/dev/gemini-core`
-    *   **役割:** 全体方針、ルール (`GEMINI.md`)、スキル、共有ワークフローの策定と管理。
-    *   **権限:** **書き込み可能 (Read/Write)**。ルールの変更は必ずここで行う。
-*   **現場 (Projects):** `mcp-servers`, `project-stock2`, `salesforce` 等
-    *   **役割:** ルールの適用と遵守。
-    *   **権限:** **読み取り専用 (Read-Only)**。`.gemini` サブモジュール内の直接編集は禁止され、物理的にブロック（`chmod a-w`）される。
+*   **環境変数**: `GEMINI_ROOT` (例: `/home/irom/dev`) を定義し、全プロジェクトの親ディレクトリとして使用する。
+*   **司令塔 (Core)**: `$GEMINI_ROOT/gemini-core`
+    *   **役割**: 全体方針、ルール (`GEMINI.md`)、スキル、共有ワークフローの策定 and 管理。
+    *   **権限**: **書き込み可能 (Read/Write)**。ルールの変更は必ずここで行う。
+*   **現場 (Projects)**: `$GEMINI_ROOT/` 配下の各リポジトリ。
+    *   **役割**: ルールの適用と遵守。
+    *   **権限**: **読み取り専用 (Read-Only)**。`.gemini` サブモジュール内の直接編集は禁止され、物理的にブロック（`chmod a-w`）される。
 
 ### 8.2 運用フロー (Operational Workflow)
 1.  **ルール変更:**
