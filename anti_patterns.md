@@ -87,18 +87,28 @@ function debugLog(message: string): void {
 ## パス・環境依存
 
 ### AP-005: Absolute Path Hardcoding (絶対パスのハードコード)
-- **問題**: ソースコード内に `/home/user/...` といった環境依存の絶対パスが直接記述されている
-- **影響**: 開発者間やCI環境、サーバー移行時に動作しなくなる（ポータビリティの欠如）
-- **解決策**: `pathlib` による相対パス解決、または設定ファイル (`config.yaml`) で管理する
+- **問題**: ソースコード、設定ファイル、または起動スクリプト内に `/home/user/...` といった特定の環境に依存する絶対パスが直接記述されている
+- **影響**: 開発者間やCI環境、サーバー移行時に動作しなくなる（ポータビリティの欠如）。設定ファイル（`mcp_config.json` 等）の修正漏れが発生する。
+- **解決策**:
+  - **環境変数での一元管理**: ルートの `.env` で `MCP_ROOT` 等を定義し、各所から参照する。
+  - **相対パス解決**: 実行スクリプトの位置を基準にパスを動的に解決する。
+  - **構成の自動生成**: `.env` を元に設定ファイル（JSON）をスクリプトで自動生成する。
 
 ```python
-# ❌ 悪い例
-db_path = "/home/irom/project-stock2/data/stock.db"
-
-# ✅ 良い例
+# ✅ Python: pathlib を使用
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
-db_path = BASE_DIR / "data" / "stock.db"
+```
+
+```typescript
+// ✅ Node.js: process.env または path.resolve を使用
+const root = process.env.MCP_ROOT || path.join(__dirname, '..');
+```
+
+```bash
+# ✅ Shell: スクリプトの位置を取得して相対解決
+SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
+BUILD_PATH="${SCRIPT_DIR}/build/index.js"
 ```
 
 ---
@@ -109,3 +119,4 @@ db_path = BASE_DIR / "data" / "stock.db"
 |------|-----|--------|------|
 | 2026-01-31 | AP-001〜004 | Agent | 初期登録（discord-server リファクタリングより） |
 | 2026-01-31 | AP-005 | Agent | 絶対パスのハードコード禁止 (inspect_db.py調査より) |
+| 2026-02-01 | AP-005 | Agent | .env 一元管理と自動設定生成パターンを追記 (mcp-servers 移行プロジェクトより) |
