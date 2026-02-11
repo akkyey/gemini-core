@@ -95,7 +95,24 @@ cd .gemini && git pull origin main && cd ..
 3.  **環境分離の原則 (Environmental Isolation):**
     *   本番環境 (`production`) 以外では、Google Drive への書き込み等の「外部破壊的な操作」を物理的にガードする仕組みを実装すること。
     *   DBパス等は環境変数 (`STOCK_ENV` 等) に応じて `/tmp` 等の隔離領域へ自動リダイレクトさせること。
-## 4. 完了の定義 (Definition of Done)
+---
+
+## 4. コマンド実行の安全性 (Command Execution Safety)
+
+端末のハングアップやゾンビプロセスの発生を防ぐため、以下のルールを遵守すること。
+
+1.  **単発実行の原則 (One Command at a Time):**
+    *   `&&` や `;` を使用して複数のコマンドを1行に連結することを禁止する。
+    *   特に `git pull && git push` のようなネットワーク通信やロック機構を伴う操作は、必ず分割して実行し、各ステップの成功を確認すること。
+2.  **事前のクリーンアップ (Pre-flight Cleanup):**
+    *   長時間実行されるプロセスやロックファイルを生成するコマンド（`git`, `npm`, `python`）を実行する前には、同名のゾンビプロセスが残っていないか確認・削除することを推奨する。
+    *   `safe_commander` スキルの使用を検討せよ。
+3.  **ログ記録 (Logging):**
+    *   トラブル時の調査を容易にするため、重要なバッチ処理や長時間コマンドは、標準出力を一時ファイルに記録（`tee` 等）する運用を推奨する。
+
+---
+
+## 5. 完了の定義 (Definition of Done)
 
 エージェントが各タスクまたは修正を「完了」とし、ユーザーに報告 (`notify_user`) する前には、以下のチェックリストを**絶対条件**として満たさなければならない。
 
@@ -112,14 +129,14 @@ cd .gemini && git pull origin main && cd ..
 
 ---
 
-## 5. 無限修正ループの防止 (Infinite Loop Prevention)
+## 6. 無限修正ループの防止 (Infinite Loop Prevention)
 
 
 同一の修正が**2回以上**失敗した場合は、直ちに作業を停止し、**「代替案の提示」** または **「根本原因の再調査」** を行うこと。盲目的な再試行は禁止する。
 
 ---
 
-## 6. ドキュメント・ブログ管理 (Documentation & Blog)
+## 7. ドキュメント・ブログ管理 (Documentation & Blog)
 
 1.  **ブログ記事の格納場所:**
     -   ブログネタや記事ドラフトは、各プロジェクトの **`blog/`** ディレクトリ（親リポジトリの場合は `mcp-servers/blog/`）に格納すること。
@@ -133,7 +150,7 @@ cd .gemini && git pull origin main && cd ..
 
 ---
 
-## 7. 長期記憶 (Memory Management)
+## 8. 長期記憶 (Memory Management)
 
 長期記憶MCP (`memory-server`) は、未来の判断を助ける知見を蓄積・活用するための重要インフラである。
 
@@ -167,7 +184,7 @@ cd .gemini && git pull origin main && cd ..
 
 ---
 
-## 8. コンテキスト管理とガバナンス (Context Management & Governance)
+## 9. コンテキスト管理とガバナンス (Context Management & Governance)
 
 本プロジェクトでは、`gemini-core` リポジトリを「唯一の正解（Single Source of Truth）」とし、全プロジェクトのルールとコンテキストを一元管理する。
 
@@ -197,7 +214,7 @@ git submodule add https://github.com/akkyey/gemini-core.git .gemini
 
 ---
 
-## 9. 知見の還流とガバナンスの進化 (Insight Feedback Loop)
+## 10. 知見の還流とガバナンスの進化 (Insight Feedback Loop)
 
 各プロジェクト（現場）で得られた個別の知見を、組織全体（gemini-core）の共通ルールへと昇格させる仕組みを定義する。
 
