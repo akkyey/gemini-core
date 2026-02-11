@@ -61,7 +61,7 @@ cd .gemini && git pull origin main && cd ..
 
 7.  **品質ゲートキーパー (`quality_gatekeeper`):**
     *   **用途:** コミット前の品質検閲。
-    *   **カバー範囲:** Radonによる複雑度(CC)・保守性(MI)の計測、リファクタリング勧告。
+    *   **カバー範囲:** Radonによる複雑度(CC: Aランク維持)・保守性(MI: 65以上)の計測、リファクタリング勧告。
 
 ### 1.1 禁止事項とアンチパターン (Prohibited Actions & Anti-Patterns)
 
@@ -92,7 +92,9 @@ cd .gemini && git pull origin main && cd ..
     *   すべてのビルド・実行は `node_modules` にインストールされた依存関係を使用し、最新の `npm` または `npx` コマンドを通じて実行すること。
 2.  **禁止事項:**
     *   プロジェクト外のグローバルな `tsc` を直接常用してはならない（`npx tsc` 等を使用）。
-
+3.  **環境分離の原則 (Environmental Isolation):**
+    *   本番環境 (`production`) 以外では、Google Drive への書き込み等の「外部破壊的な操作」を物理的にガードする仕組みを実装すること。
+    *   DBパス等は環境変数 (`STOCK_ENV` 等) に応じて `/tmp` 等の隔離領域へ自動リダイレクトさせること。
 ## 4. 完了の定義 (Definition of Done)
 
 エージェントが各タスクまたは修正を「完了」とし、ユーザーに報告 (`notify_user`) する前には、以下のチェックリストを**絶対条件**として満たさなければならない。
