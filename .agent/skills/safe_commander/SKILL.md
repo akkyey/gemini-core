@@ -31,20 +31,39 @@ pkill -f "git" || true
 
 コマンドを実行し、その出力を一時ログファイルに保存します。
 `tee` を使うことで、リアルタイムの出力確認とログ保存を両立します。
+また、**`timeout` コマンドを使用して、予期せぬハングアップから自動復帰**できるようにします。
 
 ```bash
-# ログファイル名の生成（ユニーク性が重要）
+# ログファイル名の生成
 LOG_FILE="/tmp/cmd_$(date +%Y%m%d_%H%M%S).log"
+
+# タイムアウト設定 (デフォルト 300秒)
+# 推奨値:
+# - Linux基本コマンド (ls, find, cp): 30s
+# - Git/Network (git fetch, curl): 60s - 300s
+# - Build/Test (npm install, pytest): 実績時間 * 1.5 (または 3600s)
+TIMEOUT_DURATION="${TIMEOUT:-300s}"
 
 # コマンド実行（set -o pipefail でパイプ途中のエラーも検知）
 set -o pipefail
 {
+  START_TIME=$(date +%s)
   echo "=== START: $(date) ==="
-  # ここに実行したいコマンドを書く
-  # 例:
-  # git pull origin main
-  your_command_here
-  echo "=== END: $(date) ==="
+  echo "=== TIMEOUT: $TIMEOUT_DURATION ==="
+  
+  # timeout -k <kill_after> <duration> <command>
+  timeout -k 5s "$TIMEOUT_DURATION" your_command_here
+  
+  EXIT_CODE=$?
+  END_TIME=$(date +%s)
+  DURATION=$((END_TIME - START_TIME))
+  
+  if [ $EXIT_CODE -eq 124 ]; then
+    echo "[ERROR] Command timed out after $TIMEOUT_DURATION"
+  fi
+  
+  echo "=== END: $(date) (Exit: $EXIT_CODE, Duration: ${DURATION}s) ==="
+  exit $EXIT_CODE
 } 2>&1 | tee "$LOG_FILE"
 ```
 
@@ -53,7 +72,12 @@ set -o pipefail
 直前のコマンドの終了ステータス (`$?`) に基づいて判断します。
 
 *   **成功 (`$? == 0`)**: ログファイルを削除します（またはアーカイブ）。
-*   **失敗 (`$? != 0`)**: ログファイルのパスをユーザーに通知し、解析を促します。
+*   **タイムアウト (`$? == 124`)**: 
+    1.  **ログ確認**: `tail -n 20 $LOG_FILE` で直前の状況を確認する。
+    2.  **判定**:
+        *   **進行中だった**: 処理は進んでいたが時間が足りなかった場合 → **倍の時間 (`TIMEOUT * 2`) で1回だけリトライ**する。
+        *   **停止していた**: 長時間出力がなくハングしていた場合 → **リトライせず中断**し、原因（入力待機、ロック競合等）を調査する。
+*   **その他の失敗 (`$? != 0`)**: ログファイルのパスをユーザーに通知し、解析を促します。
 
 ## MCPでの使用例
 
