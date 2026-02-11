@@ -7,6 +7,13 @@ description: コード品質の維持・向上、カバレッジ改善、静的�
 
 このスキルは、プロジェクトの品質基準（カバレッジ目標、Lint/Type Checkパス）を効率的に達成・維持するための手順書です。
 
+> [!CAUTION]
+> **AP-012: 言語とツールの不一致に注意**
+> ツール実行前に、必ずプロジェクトの主要言語を確認してください。
+> - **Python プロジェクト** (`pyproject.toml` / `requirements.txt` あり) → `ruff`, `black`, `mypy`, `pytest`
+> - **TypeScript プロジェクト** (`package.json` / `tsconfig.json` あり) → `eslint`, `prettier`, `tsc`, `jest`/`vitest`
+> - **絶対に `.py` ファイルに `eslint` を、`.ts` ファイルに `ruff` を実行しないこと。**
+
 ## 作業フロー
 
 ### 1. ターゲット分析 (Analysis)
@@ -28,8 +35,6 @@ description: コード品質の維持・向上、カバレッジ改善、静的�
 2.  **改善計画**:
     - `Missing` と判定された行を確認し、どのようなテストケースが必要かリストアップします。
     - Lint/型エラーの内容を分類（自動修正可能か、要ロジック修正か）します。
-
-### 2. 修正と改善 (Remediation)
 
 ### 2. 修正と改善 (Remediation)
 

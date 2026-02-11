@@ -131,6 +131,7 @@ BUILD_PATH="${SCRIPT_DIR}/build/index.js"
   - ツール実行ロジックをサーバーインスタンスから独立した非同期関数（例: `handleCallTool`）として定義・export する。
   - 外部依存（DB接続、外部APIクライアント等）は引数として渡す。
 
+
 ### AP-007: 設定ディレクトリの手動構築
 - **問題**: エージェントが独自判断で `.gemini` ディレクトリや `GEMINI.md` をサブプロジェクト配下に手動で作成・構築する。
 - **影響**: 
@@ -161,12 +162,76 @@ BUILD_PATH="${SCRIPT_DIR}/build/index.js"
 
 ---
 
+## データフロー
+
+### AP-010: Ambiguous Resource Auto-Selection (不透明な自動リソース選択)
+- **問題**: ファイル名やディレクトリ構造を走査し、最新のファイルを「推測（例: `max(files)`）」して処理の入力とする。
+- **影響**: 
+  - ファイル名の命名規則（アルファベット順 vs 数値順）の勘違いにより、意図しない古いデータが選ばれる。
+  - 処理が暗黙的になり、データフローの追跡が困難になる。
+- **解決策**:
+  - 生成元プロセスから生成先プロセスへ、ファイルパスを**明示的な引数（Data Relay）**として渡す。
+  - ファイルパスの不確実性を排除するインターフェース設計を行う。
+
+```python
+# ❌ 悪い例: 暗黙のファイル探索
+files = glob.glob("data/output/*.csv")
+target = max(files)  # アルファベット順で weekly が daily に勝つ
+
+# ✅ 良い例: 明示的なパスリレー
+report_paths = reporter.generate_reports(results)  # {"summary": Path, "detailed": Path}
+tools.export_to_sheets(csv_path=str(report_paths["summary"]))
+```
+
+### AP-011: Truthless Success Notification (不実な完了通知)
+- **問題**: サブプロセス（アップロード、連携など）が失敗しているにもかかわらず、メインプロセスが終了したことのみをもって「✅ 成功」として通知する。
+- **影響**: 
+  - ユーザーが不具合（データの未更新等）に気づくのが遅れる。
+  - システムが「正常」を装うため、信頼性が損なわれる。
+- **解決策**:
+  - 処理の全ステップの結果を収集（Error Tracking）し、一つでも例外や警告があれば「⚠️ Partial Success（一部失敗）」等のステータスで通知する。
+  - 通知の色やタイトルをステータスに応じて動的に変更する。
+
+```python
+# ❌ 悪い例: 例外を握りつぶして成功通知
+try:
+    upload_to_drive(file)
+except Exception:
+    pass  # 失敗を無視
+notifier.notify_success(mode)  # 常に成功
+
+# ✅ 良い例: Error Tracking の活用
+try:
+    upload_to_drive(file)
+except Exception as e:
+    context.add_error(f"Upload failed: {e}")  # エラーを記録
+notifier.notify_success(mode, has_error=context.has_partial_failure)
+```
+
+### AP-012: Language-Tool Mismatch (言語とツールの不一致)
+- **問題**: プロジェクトの主要言語と異なるエコシステムのツール（例: Python プロジェクトに ESLint、TypeScript プロジェクトに ruff）を実行する。
+- **影響**: 
+  - ツールが対象言語を解析できず、永久にハングまたは無意味な結果を返す。
+  - 実行時間が無限に浪費される（実例: 2時間近くハングした `npx eslint *.py`）。
+- **解決策**:
+  - プロジェクトの `pyproject.toml` / `package.json` を確認し、対応するツールのみを使用する。
+  - **Python** → `ruff`, `black`, `mypy`, `pytest`
+  - **TypeScript/JavaScript** → `eslint`, `prettier`, `tsc`, `jest`/`vitest`
+  - ツール実行前に対象ファイルの拡張子を確認するガードを設ける。
+
+> [!CAUTION]
+> **`.py` ファイルに `eslint` を、`.ts` ファイルに `ruff` を実行してはならない。**
+> ツールがハングし、数時間のリソース浪費を招く。
+
+---
+
 ## 更新履歴
 
 | 日付 | ID | 追加者 | 概要 |
 |------|-----|--------|------|
 | 2026-01-31 | AP-001〜004 | Agent | 初期登録（discord-server リファクタリングより） |
-| 2026-01-31 | AP-005 | Agent | 絶対パスেরハードコード禁止 (inspect_db.py調査より) |
+| 2026-01-31 | AP-005 | Agent | 絶対パスのハードコード禁止 (inspect_db.py調査より) |
 | 2026-02-01 | AP-005 | Agent | .env 一元管理と自動設定生成パターンを追記 (mcp-servers 移行プロジェクトより) |
 | 2026-02-01 | AP-005 | Agent | 「外部化 vs 相対化」の注意点と相対シンボリックリンクについて追記 |
 | 2026-02-05 | AP-006〜009 | Agent | MCPハンドラー抽出、設定構築ルール、ディレクトリ生成、記憶登録失敗対応を追加 |
+| 2026-02-11 | AP-010〜012 | Agent | 不透明な自動リソース選択、不実な完了通知、言語ツール不一致を追加 |
