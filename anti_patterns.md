@@ -162,7 +162,6 @@ BUILD_PATH="${SCRIPT_DIR}/build/index.js"
 
 ---
 
-<<<<<<< HEAD
 ## データフロー
 
 ### AP-010: Ambiguous Resource Auto-Selection (不透明な自動リソース選択)
@@ -275,6 +274,24 @@ notifier.notify_success(mode, has_error=context.has_partial_failure)
 
 ---
 
+## 設定同期
+
+### AP-019: MCP設定ファイルの二重管理 (Divergent MCP Config)
+- **問題**: MCP設定ファイル (`mcp_config.json`) がリポジトリ側（`mcp-servers/`）とIDE側（`~/.gemini/antigravity/`）の2箇所に独立して存在し、それぞれが異なるタイミングで更新される。
+- **影響**: 
+  - ディレクトリ移行やサーバー追加時に片方のみ更新され、パスやサーバー名がずれる。
+  - IDEリロード後にMCPサーバーが接続できない「壊れた状態」が発生する。
+  - 原因特定に時間がかかる（設定ファイルが2箇所あることを知らないと気づけない）。
+- **解決策**:
+  - **マスター（唯一の正解）を1つに定義する**: `mcp-servers/mcp_config.json` をマスターとする。
+  - **同期の自動化**: `/sync-gemini` ワークフロー実行時にマスターからIDE側へ自動コピーする。
+  - **直接編集の禁止**: IDE側の設定ファイルを直接編集しない。変更は必ずマスター側で行う。
+
+> [!CAUTION]
+> **MCP設定の変更は必ず `mcp-servers/mcp_config.json`（マスター）で行うこと。** IDE側の設定ファイルは `/sync-gemini` で自動生成される派生物であり、直接編集は次回同期時に上書きされる。
+
+---
+
 ## 更新履歴
 
 | 日付 | ID | 追加者 | 概要 |
@@ -286,4 +303,5 @@ notifier.notify_success(mode, has_error=context.has_partial_failure)
 | 2026-02-05 | AP-006〜009 | Agent | MCPハンドラー抽出、設定構築ルール、ディレクトリ生成、記憶登録失敗対応を追加 |
 | 2026-02-11 | AP-010〜012 | Agent | 不透明な自動リソース選択、不実な完了通知、言語ツール不一致を追加 |
 | 2026-02-11 | AP-013〜015 | Agent | 環境依存、リソース解決、テスト待機に関するアンチパターンを追加（project-stock2統合） |
-| 2026-02-11 | AP-016〜017 | Agent | コマンド連結禁止、プロセス状態確認を追加（ハングアップ対策） |
+| 2026-02-11 | AP-016〜018 | Agent | コマンド連結禁止、プロセス状態確認、無限ブロックを追加（ハングアップ対策） |
+| 2026-02-12 | AP-019 | Agent | MCP設定ファイル二重管理の禁止を追加 |
