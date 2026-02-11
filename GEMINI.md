@@ -69,9 +69,12 @@ cd .gemini && git pull origin main && cd ..
 
 1.  **Gitコマンドの直接実行禁止 (No Direct Git Commit):**
     *   `run_command` 等を使って `git commit -m ...` を直接実行してはならない。必ず `git_committer` スキルの手順（一時ファイル作成等）を経由すること。
-2.  **診断スキップの禁止 (No Skipping Diagnostics):**
+2.  **危険なコマンド実行の禁止 (Use Safe Shell Server):**
+    *   可能な限り、生の `run_command` ではなく、MCPサーバー **`safe-shell-server` (`execute_safe`)** を使用すること。
+    *   これにより、コマンド連結の禁止、タイムアウトの強制、ログの自動保存がシステム的に保証される。
+3.  **診断スキップの禁止 (No Skipping Diagnostics):**
     *   コミット前に `npm test` 及び `npm run build` を含む診断手順を省略してはならない。「軽微な修正だから大丈夫」という判断は認められない。
-3.  **自己判断によるルール変更禁止:**
+4.  **自己判断によるルール変更禁止:**
     *   ユーザーの明示的な承認なしに `GEMINI.md` のルールを緩和・削除してはならない。
 
 
