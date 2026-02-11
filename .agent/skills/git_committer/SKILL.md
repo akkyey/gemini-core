@@ -5,13 +5,17 @@ description: GEMINI.mdの安全規定に準拠し、一時ファイルを経由�
 
 # Git Committer Skill
 
-GEMINI.md 第7章「コマンド実行の安全性」に基づき、シェルインジェクションを防ぐ安全なコミット手順を提供します。
+GEMINI.md 第4章「コマンド実行の安全性」に基づき、シェルインジェクションを防ぐ安全なコミット手順を提供します。
 エージェントは変更をコミットする際、直接 `git commit -m` を使用せず、必ずこのスキルを使用してください。
 
 > [!WARNING]
 > **本スキルの使用は「絶対義務」である。**
 > いかなる「軽微な修正」や「緊急対応」であっても、この手順（診断実行→一時ファイル作成→コミット）を省略することは許されない。
 > 直接 `git commit` コマンドを発行した時点で、それは**プロセス違反**とみなされる。
+
+> [!IMPORTANT]
+> **すべてのコマンド実行は `safe-shell` MCP (`mcp_safe-shell_execute_safe`) を使用すること。**
+> `run_command` の直接使用は禁止。タイムアウト付きで安全に実行され、ログも自動保存される。
 
 
 ## 作業フロー
@@ -29,58 +33,63 @@ GEMINI.md 第7章「コマンド実行の安全性」に基づき、シェルイ
         - `test:` テストの追加・修正
         - `chore:` ビルドプロセスやツール、ライブラリの変更
 
-### 2. コミット前処理 (Pre-commit Hooks)
+### 2. コミット前処理 (Pre-commit Checks)
 
 1.  **ステージングの確認 (Staging Check)**:
     - 修正がサブモジュール（例: `stock-analyzer4/`）に及ぶ場合、サブモジュール側でのコミット後に、親リポジトリ側でもその変更がステージング (`git add <submodule_path>`) されているか必ず確認してください。
 
-<!-- (Step Removed: self_diagnostic is now enforced by Git Hook) -->
-
-2.  **コンテキスト更新 (Context Update)**:
-    - 重要な変更（src/ docs/ config.yaml等）を含む場合、コンテキストを最新化します。
-      ```bash
-      python3 full_context/generate_full_context.py
-      ```
-    - 更新されたファイルをステージングに追加します。
-      ```bash
-      git add full_context/
-      ```
-
-3.  **アンチパターンチェック (Anti-Pattern Check)**:
+2.  **アンチパターンチェック (Anti-Pattern Check)**:
 
     > [!IMPORTANT]
     > `.gemini/anti_patterns.md` を参照し、変更コードに該当パターンがないか確認すること。
-    
-    **手順**:
-    1. `.gemini` サブモジュールを `git pull` して最新化
-    2. `anti_patterns.md` の各パターンをチェック
-    3. 該当があれば修正してからコミット
 
+### 3. 一時ファイル作成 (Create Temp File)
+
+1.  **コミットメッセージを一時ファイルに書き出す**:
+    - `write_to_file` ツールを使用して、コミットメッセージを `.git/COMMIT_EDITMSG_TEMP` に書き出します。
+    - これにより、メッセージ内の特殊文字（`"`, `'`, `!` 等）によるシェルインジェクションを回避します。
 
 ### 4. コミット実行 (Execute Commit)
 
-1.  **コミットの実行**:
-    - 以下のMCPツールを呼び出し、コミットを実施します。
-      - `tool: git_task.git_commit`
-      - `message`: "[Prefix]: [Title]\n\n[Details]"
-    - ※このツールは自動的に一時ファイル作成と安全なコミット処理を行います。
+1.  **`safe-shell` MCP でコミットを実行**:
+    ```
+    mcp_safe-shell_execute_safe({
+      command: "git commit -F .git/COMMIT_EDITMSG_TEMP",
+      cwd: "<リポジトリルート>",
+      timeout_seconds: 30
+    })
+    ```
+
+> [!CAUTION]
+> **`run_command` や `git commit -m "..."` の直接使用は禁止。**
+> 必ず `safe-shell` MCP + 一時ファイル（`-F`）方式を使うこと。
 
 ### 5. プッシュと完了確認（Push & Verify）
 
 1.  **リモートへのプッシュ**:
-    - リモートにプッシュします（これまで通り `run_command` を使用、または将来的に `git_push` ツール実装時はそちらを使用）。
-      ```bash
-      git push origin <branch_name>
-      ```
+    ```
+    mcp_safe-shell_execute_safe({
+      command: "git push origin <branch_name>",
+      cwd: "<リポジトリルート>",
+      timeout_seconds: 30
+    })
+    ```
 
 2.  **最終ステータス確認**:
-    - `tool: git_task.git_status` を呼び出し、変更が残っていないことを確認してください。
+    ```
+    mcp_safe-shell_execute_safe({
+      command: "git status",
+      cwd: "<リポジトリルート>",
+      timeout_seconds: 10
+    })
+    ```
+    - `working tree clean` であることを確認してください。
 
 3.  **Discord通知と確認 (Notify & Verify)**:
     - コミット完了を通知し、**必ず送信成功を確認してください**。
-    - `tool: discord.send_message`
+    - `tool: mcp_discord_send_message`
     - `channel_name`: "notifications"
     - `content`: "✅ **[Commit]** `<Title>`\nブランチ `<branch_name>` にプッシュしました。"
     - **確認手順**:
-        - ツール実行後、戻り値を確認し、エラーが出ていないことをチェックする。
-        - ユーザーへの最終報告 (`notify_user`) に、必ず **「Discord通知: 送信確認済み」** と明記すること。
+        - 送信後、`mcp_discord_read_recent_messages` で到着を確認する。
+        - ユーザーへの最終報告に、必ず **「Discord通知: 送信確認済み」** と明記すること。
