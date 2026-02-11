@@ -24,10 +24,17 @@ cd <TARGET_PATH>
 # Git初期化（まだの場合）
 if [ ! -d ".git" ]; then git init; fi
 
-# Geminiサブモジュール追加
-if [ ! -d ".gemini" ]; then
-    git submodule add https://github.com/akkyey/gemini-core.git .gemini
-    git submodule update --init --recursive
+# Geminiシンボリックリンク作成（サブモジュールではない）
+# 前提: ../gemini-core が存在すること
+if [ ! -L ".gemini" ]; then
+    ln -s ../gemini-core .gemini
+    echo "✅ ./gemini -> ../gemini-core リンク作成完了"
+fi
+
+# .gitignore に .gemini を追記（ローカルパス依存のため追跡しない）
+if ! grep -q "^\.gemini$" .gitignore 2>/dev/null; then
+    echo -e "\n# gemini-core シンボリックリンク\n.gemini" >> .gitignore
+    echo "✅ .gitignore に .gemini を追加"
 fi
 
 # ワークフローディレクトリ作成
@@ -35,8 +42,10 @@ mkdir -p .agent/workflows
 
 # 必須ワークフローのコピー
 CORE_ROOT=$(git rev-parse --show-toplevel)
-cp "${CORE_ROOT}/.agent/workflows/sync-gemini.md" .agent/workflows/
-cp "${CORE_ROOT}/.agent/workflows/check-all-status.md" .agent/workflows/
+# 注意: コピー元は .gemini/ 経由で取得
+cp ".gemini/.agent/workflows/sync-gemini.md" .agent/workflows/
+cp ".gemini/.agent/workflows/check-all-status.md" .agent/workflows/
+```
 
 ### 2. ドキュメント環境の整備
 
@@ -44,8 +53,8 @@ cp "${CORE_ROOT}/.agent/workflows/check-all-status.md" .agent/workflows/
 
 ```bash
 # gemini-docs のルートを特定
-CORE_ROOT=$(git rev-parse --show-toplevel)
-DOCS_ROOT=$(cd "${CORE_ROOT}/../gemini-docs"; pwd)
+# gemini-core と gemini-docs は同階層にあると仮定
+DOCS_ROOT=$(cd "../gemini-docs" && pwd)
 
 # フォルダ作成
 mkdir -p "${DOCS_ROOT}/projects/<PROJECT_NAME>"
@@ -71,25 +80,22 @@ echo "| \`projects/<PROJECT_NAME>/\` | \`\$GEMINI_ROOT/<PROJECT_NAME>\` のみ |
 ファイル: `gemini-core/../gemini.code-workspace`
 *   `folders` 配列に新しいパスを追加してください。
 
-### 3. 設定の反映
+### 4. 設定の反映
 
 ```bash
-# gemini-core のルートを特定
-CORE_ROOT=$(git rev-parse --show-toplevel)
-
-# Core側の変更を保存
-cd "${CORE_ROOT}"
+# gemini-core の変更を保存
+cd ../gemini-core
 git add .
 git commit -m "chore: add <PROJECT_NAME> to gemini ecosystem"
 git push origin main
 ```
 
-# プロジェクト側の変更を保存
+### 5. プロジェクト側の変更を保存
 
 ```bash
 cd <TARGET_PATH>
 git add .
-git commit -m "chore: initial commit with gemini-core submodule"
+git commit -m "chore: initial commit with gemini-core symlink"
 ```
 
 ## 完了

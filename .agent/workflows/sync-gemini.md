@@ -1,10 +1,11 @@
 ---
-description: .gemini サブモジュールを最新化する
+description: .gemini (シンボリックリンク) のHooksとMCP設定を同期する
 ---
 
 # MCP 最新化ワークフロー
 
-このワークフローは `.gemini` サブモジュールをすべてのプロジェクトで最新化します。
+このワークフローは `.gemini`（シンボリックリンク）配下のHooksを適用し、MCP設定を同期します。
+以前のサブモジュール方式とは異なり、`git pull` は不要です（リンク先 `gemini-core` が正であれば常に最新です）。
 
 ## 対象プロジェクト
 
@@ -20,9 +21,9 @@ description: .gemini サブモジュールを最新化する
 
 // turbo-all
 
-### 1. 各プロジェクトの .gemini サブモジュールを同期
+### 1. 各プロジェクトの Git Hooks を適用
 
-原本（`gemini-core`）から各プロジェクトへルールとHooksを配布・適用します。
+`.gemini` がシンボリックリンクとして正しく存在することを確認し、Git Hooks をコピーします。
 
 ```bash
 # gemini-core のルートを特定
@@ -31,21 +32,20 @@ DEV_ROOT=$(cd "${CORE_ROOT}/.."; pwd)
 
 # projects.json を読み込み（AIは事前に内容を確認してください）
 # 各プロジェクトに対して以下の処理を繰り返します：
-# 1. git pull
-# 2. chmod -R a-w
-# 3. git hooks 適用
+# 1. リンク確認
+# 2. git hooks 適用
 
 # 例: mcp-servers の場合
-cd "${DEV_ROOT}/mcp-servers/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "mcp-servers: サブモジュール未設定またはフォルダ不在"
+dir="${DEV_ROOT}/mcp-servers"; [ -L "${dir}/.gemini" ] && cp "${dir}/.gemini/scripts/git-hooks/pre-commit" "${dir}/.git/hooks/" && chmod +x "${dir}/.git/hooks/pre-commit" && echo "✅ mcp-servers: Hooks適用" || echo "⚠️ mcp-servers: .geminiリンク不在またはディレクトリ不正"
 
 # 例: project-stock2 の場合
-cd "${DEV_ROOT}/project-stock2/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "project-stock2: サブモジュール未設定またはフォルダ不在"
+dir="${DEV_ROOT}/project-stock2"; [ -L "${dir}/.gemini" ] && cp "${dir}/.gemini/scripts/git-hooks/pre-commit" "${dir}/.git/hooks/" && chmod +x "${dir}/.git/hooks/pre-commit" && echo "✅ project-stock2: Hooks適用" || echo "⚠️ project-stock2: .geminiリンク不在またはディレクトリ不正"
 
 # 例: salesforce の場合
-cd "${DEV_ROOT}/salesforce/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "salesforce: サブモジュール未設定またはフォルダ不在"
+dir="${DEV_ROOT}/salesforce"; [ -L "${dir}/.gemini" ] && cp "${dir}/.gemini/scripts/git-hooks/pre-commit" "${dir}/.git/hooks/" && chmod +x "${dir}/.git/hooks/pre-commit" && echo "✅ salesforce: Hooks適用" || echo "⚠️ salesforce: .geminiリンク不在またはディレクトリ不正"
 
 # 例: gemini-docs の場合
-cd "${DEV_ROOT}/gemini-docs/.gemini" && git pull origin main && chmod -R a-w . && cp scripts/git-hooks/pre-commit ../.git/hooks/ && chmod +x ../.git/hooks/pre-commit 2>/dev/null || echo "gemini-docs: サブモジュール未設定またはフォルダ不在"
+dir="${DEV_ROOT}/gemini-docs"; [ -L "${dir}/.gemini" ] && cp "${dir}/.gemini/scripts/git-hooks/pre-commit" "${dir}/.git/hooks/" && chmod +x "${dir}/.git/hooks/pre-commit" && echo "✅ gemini-docs: Hooks適用" || echo "⚠️ gemini-docs: .geminiリンク不在またはディレクトリ不正"
 ```
 
 ### 2. MCP設定ファイルの同期
@@ -75,11 +75,9 @@ fi
 
 Discord に通知を送信:
 ```
-mcp_discord_send_message({ channel_name: "notifications", content: "✅ .gemini サブモジュール＋MCP設定を同期しました" })
+mcp_discord_send_message({ channel_name: "notifications", content: "✅ .gemini Hooks適用＋MCP設定を同期しました" })
 ```
 
 ## 備考
 
-- サブモジュールが未設定の場合はエラーメッセージが表示されます
-- 初回設定には `sync_gemini` または `join_project` ツールを使用してください
-- MCP設定の変更は必ず `mcp-servers/mcp_config.json`（マスター）で行うこと
+- `.gemini` は `../gemini-core` へのシンボリックリンクである必要があります
