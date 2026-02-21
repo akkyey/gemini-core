@@ -26,6 +26,13 @@ env/
 Thumbs.db
 coverage.json
 _coverage.json
+*.bak
+*~
+*.tmp
+*.db
+*.db-*
+*.log
+*.log.*
 
 # IDE
 .vscode/
