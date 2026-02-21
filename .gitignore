@@ -22,6 +22,7 @@ env/
 
 # OS
 .DS_Store
+._*
 Thumbs.db
 
 # IDE
@@ -30,3 +31,5 @@ Thumbs.db
 
 # Runtime State
 session_state.json
+verification_state.json
+cache/
