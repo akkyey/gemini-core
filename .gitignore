@@ -24,6 +24,8 @@ env/
 .DS_Store
 ._*
 Thumbs.db
+coverage.json
+_coverage.json
 
 # IDE
 .vscode/
