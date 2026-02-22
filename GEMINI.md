@@ -70,8 +70,8 @@ cd .gemini && git pull origin main && cd ..
 1.  **Gitコマンドの直接実行禁止 (No Direct Git Commit):**
     *   `run_command` 等を使って `git commit -m ...` を直接実行してはならない。必ず `git_committer` スキルの手順（一時ファイル作成等）を経由すること。
 2.  **危険なコマンド実行の禁止 (Use Safe Shell V2):**
-    *   可能な限り、生の `run_command` ではなく、MCPサーバー **`safe-shell-server` (`execute_safe`)** を使用すること。
-    *   **V2 機能の活用**: 複雑なプロジェクト構造では「インテリジェント・パス解決（AUTO PYTHONPATH）」を信頼し、自律的に最適な環境で実行せよ。
+    *   原則として、生の `run_command` ではなく、MCPサーバー **`safe-shell-server` (`execute_safe`)** を使用すること。
+    *   **V2 機能の活用**: 複雑なプロジェクト構造では「インテリジェント・パス解決（AUTO PYTHONPATH）」を信頼せよ。これにより、手動の `export PYTHONPATH` などの摩擦を回避できる。
     *   単発実行だけでなく、`execute_macro` による「現場での武器の鋳造と実行」を標準的な手段として検討せよ。
 3.  **診断スキップの禁止 (No Skipping Diagnostics):**
     *   コミット前に `npm test` 及び `npm run build` を含む診断手順を省略してはならない。「軽微な修正だから大丈夫」という判断は認められない。
@@ -114,7 +114,10 @@ cd .gemini && git pull origin main && cd ..
 4.  **物理的レジリエンスの活用 (Survival Execution):**
     - 再起動や通信断絶が懸念される長時間タスクは、`background=True` で Safe-Shell の「身体」に預けよ。
     - 通信復旧後に `get_process_status` で結果を回収するフローを標準とせよ。
-5.  **事前のプロセス残留確認 (Mandatory Pre-flight Check):**
+5.  **プロセス分離の強制 (5-Second Rule):**
+    *   実行時間が **5秒** を超えると予想される全てのタスク、およびプロジェクト全体に影響を及ぼす診断スクリプトは、必ず `safe-shell-server` を使用しなければならない。
+    *   「止まっている」と判断して `run_command` を連発することを厳禁とする。
+6.  **事前のプロセス残留確認 (Mandatory Pre-flight Check):**
     *   長時間実行プロセス（サーバー、デーモン、重いスクリプト）を起動または再起動する前には、**必ず `ps` または `pgrep` で既存プロセスの有無を確認しなければならない。**
     *   「止まっているはず」という推測でコマンドを発行することを禁止する。
 
@@ -135,6 +138,12 @@ cd .gemini && git pull origin main && cd ..
     *   プッシュ直前の状態で `npm test` やビルド、診断スクリプトがパスしていることを最終確認する。
 
 **「ローカルで直った」は完了ではない。「ユーザーの手元で動く状態になった」ことこそが完了である。**
+
+### 5.1 標準ワークフローの優先利用 (Workflow First)
+
+単にマニュアル（Skills）を参照するだけでなく、以下のワークフローを優先的に使用して、安全な操作を「型」として実行すること。
+- **`/safe-push`**: Safe-Shell V2 経由での安全かつ自律的なコミット・ボム（プッシュ）の完遂
+- **`/sync-gemini`**: 司令塔からの環境同期およびガバナンスの適用
 
 ---
 
@@ -243,3 +252,17 @@ git submodule add https://github.com/akkyey/gemini-core.git .gemini
 
 ### 9.3 完了の定義 (Definition of Done)
 *   マスタへの反映が完了した後、現場の `local_insights.md` はクリア（またはアーカイブ）され、次の蓄積サイクルに備えること。
+
+---
+
+## 11. 規約遵守の自己是正サイクル (Self-Correction & Compliance Cycle)
+
+AI エージェントが安全なツール（Safe-Shell V2 等）を回避し、古い習慣（`run_command` 等）に逃げたことをユーザーから指摘され、作業がキャンセルされた場合、以下の是正サイクルを**強制的**に実行しなければならない。
+
+### 11.1 原因分析と記録
+1.  **即時分析**: なぜ正規の手順を「使いにくい」または「不要」と判断し、回避したのか、技術的・心理的要因を内省する。
+2.  **記憶の定着 (`memory-server`)**: 失敗の経緯、回避の動機、および再発防止策を `tag: ["failure", "compliance"]` 付きで記録する。
+3.  **Local Insights への昇格**: 得られた知見（例：ツールの使い勝手の改善案やルールの明確化）を直ちに `.agent/local_insights.md` に追記する。
+
+### 11.2 ルールの実効性強化
+単に謝罪するのではなく、**「次に同じ状況になった際に回避を選ばないための環境側への働きかけ（ワークフローの改善提案等）」**をセットで行うこと。
