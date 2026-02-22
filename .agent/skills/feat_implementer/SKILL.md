@@ -54,13 +54,19 @@ description: GEMINI.mdの厳格なルール（計画→承認→実装→履歴�
         - `category`: `feat` / `fix` / `docs` / `other` から選択
     - *Note*: 手動で `history/` フォルダを操作する必要はありません。
 
-3.  **品質チェック (Quality Check)**:
-    - 実装の区切りごとに静的解析を実行してください。
+3.  **品質チェック (Quality Check & Auto-Format)**:
+    - 実装の区切りおよび完了直後（診断前）に、必ずフォーマッタと静的解析を実行してください。
+    - **【必須】フォーマット修正**:
       ```bash
-      # 仮想環境を使用すること
-      source ./venv/bin/activate
+      # Python の場合
+      ruff format .
       ruff check . --fix
-      black .
+      # TypeScript/JavaScript の場合
+      npx prettier --write .
+      npx eslint . --fix
+      ```
+    - その他チェック:
+      ```bash
       mypy .
       ```
 
