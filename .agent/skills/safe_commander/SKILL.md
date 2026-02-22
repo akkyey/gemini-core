@@ -1,112 +1,60 @@
----
-name: safe_commander
-description: コマンド実行時のハングアップやゾンビプロセスを防止し、安全かつ追跡可能な実行環境を提供するスキル。
----
+# Safe Commander Skill (V2)
 
-# Safe Commander Skill
-
-このスキルは、ターミナルでのコマンド実行において「ハングアップ」「原因不明の失敗」「ゾンビプロセスによるロック競合」を防ぐための標準手順を提供します。
-重要なコマンドや長時間実行されるプロセス（Git同期、サーバー起動、大規模ビルド等）を実行する際は、可能な限りこのスキルを使用してください。
+このスキルは、Safe-Shell V2 の強固な隔離基盤と自律監視能力を最大限に引き出し、AI エージェントが実行するタスクの「安全性」と「継続性」を担保するための標準手順を提供します。
 
 ## 原則
 
-1.  **Clean First**: 実行前に「場をきれいにする」。古いプロセスやロックファイルは敵である。
-2.  **Log Always**: 標準出力・エラー出力は全てファイルに残す。ターミナルバッファに頼らない。
-3.  **Verify & Cleanup**: 成功を確認してからログを消す。失敗したらログを残す。
+1.  **Direct Execution**: 可能な限りシェル演算子（`&&` 等）を使わず、`execute_safe` またはマクロを使用する。
+2.  **Autonomous Monitoring**: 長時間タスクは背景実行 (`background=True`) に逃がし、`get_process_status` で定期的に内省監視を行う。
+3.  **Survival First**: サーバー再起動や通信断絶が発生しても、`State Persistence` によりプロセスを再補足するレジリエンスを維持する。
 
 ## 手順
 
-### 1. プロセスの残留確認とクリーンアップ (Sanity Check & Cleanup)
+### 1. 実行環境のクリーンアップ (Pre-flight Cleanup)
 
-実行するコマンドに関連するプロセスが既に動いていないか、必ず確認します。
+実行前に、競合するプロセスが残っていないか Safe-Shell を通じて確認します。
 
-1.  **現状確認 (Status Check)**:
-    ```bash
-    ps aux | grep "target_name" | grep -v grep
-    ```
-2.  **ユーザーへの報告と指示仰ぎ (Ask User)**:
-    *   **【重要】** 残留プロセスが見つかった場合、エージェントが勝手に `kill` するのではなく、**必ずユーザーに状況を報告し、手動での処置（または明確なKill指示）を仰いでください。**
-    *   理由: エージェントによる自動 `kill` が新たなハングやデータ破損を招くリスクを避けるためです。
-3.  **実行 (Execute)**:
-    *   ユーザーによる処置完了後、クリーンな状態でコマンドを実行します。
+1.  **プロセス確認**:
+    - `get_process_status` を実行し、既存のロックや実行中プロセスがないか確認する。
+2.  **ゾンビパージ**:
+    - 予期せぬ残留がある場合は、`cleanup` ツールを使用して「場」を物理的に浄化する。
 
-### 2. コマンドの実行とログ記録 (Execute with Logging)
+### 2. インテリジェント実行 (Smart Execution)
 
-コマンドを実行し、その出力を一時ログファイルに保存します。
-`tee` を使うことで、リアルタイムの出力確認とログ保存を両立します。
-また、**`timeout` コマンドを使用して、予期せぬハングアップから自動復帰**できるようにします。
+タスクの特性に応じて、最適な実行方法を選択します。
 
-```bash
-# ログファイル名の生成
-LOG_FILE="/tmp/cmd_$(date +%Y%m%d_%H%M%S).log"
+#### A. 短時間タスク (単発コマンド)
+- `execute_safe` を同期実行（`background=False`）で使用。
+- `AUTO PYTHONPATH` により、サブモジュール内でもパス設定なしで実行可能。
 
-# タイムアウト設定 (デフォルト 300秒)
-# 推奨値:
-# - Linux基本コマンド (ls, find, cp): 30s
-# - Git/Network (git fetch, curl): 60s - 300s
-# - Build/Test (npm install, pytest): 実績時間 * 1.5 (または 3600s)
-TIMEOUT_DURATION="${TIMEOUT:-300s}"
+#### B. 長時間タスク (テスト、ビルド)
+1.  **背景への委ね**:
+    - `execute_safe` または `execute_macro` を `background=True` で呼び出す。
+2.  **監視プロセスの確立**:
+    - 返された `pid` を保持し、一定間隔で `get_process_status` を実行する。
+3.  **内省的パース**:
+    - `log_tail` の内容を読み取り、進捗をユーザーに報告する。
 
-# コマンド実行（set -o pipefail でパイプ途中のエラーも検知）
-set -o pipefail
-{
-  START_TIME=$(date +%s)
-  echo "=== START: $(date) ==="
-  echo "=== TIMEOUT: $TIMEOUT_DURATION ==="
-  
-  # timeout -k <kill_after> <duration> <command>
-  timeout -k 5s "$TIMEOUT_DURATION" your_command_here
-  
-  EXIT_CODE=$?
-  END_TIME=$(date +%s)
-  DURATION=$((END_TIME - START_TIME))
-  
-  if [ $EXIT_CODE -eq 124 ]; then
-    echo "[ERROR] Command timed out after $TIMEOUT_DURATION"
-  fi
-  
-  echo "=== END: $(date) (Exit: $EXIT_CODE, Duration: ${DURATION}s) ==="
-  exit $EXIT_CODE
-} 2>&1 | tee "$LOG_FILE"
-```
+### 3. レジリエンス復旧 (Recovery)
 
-### 3. 結果の確認と後処理 (Verify & Teardown)
+通信断絶 (EOF) やサーバー再起動が発生した場合の復元手順。
 
-直前のコマンドの終了ステータス (`$?`) に基づいて判断します。
+1.  **沈黙の掌握**:
+    - 接続が回復次第、`get_process_status` を実行する（引数は不要。Lockから自動特定される）。
+2.  **物理証跡の確認**:
+    - `/tmp/safe_shell_logs/macro_history.log` 等を直接覗き、断絶中の挙動を確定させる。
 
-*   **成功 (`$? == 0`)**: ログファイルを削除します（またはアーカイブ）。
-*   **タイムアウト (`$? == 124`)**: 
-    1.  **ログ確認**: `tail -n 20 $LOG_FILE` で直前の状況を確認する。
-    2.  **判定**:
-        *   **進行中だった (1回目)**: 処理は進んでいたが時間が足りなかった場合 → **倍の時間 (`TIMEOUT * 2`) で1回だけ自動リトライ**する。
-        *   **停止していた / 2回目**: 
-            *   ユーザーに「強制終了しました」と通知する。
-            *   「制限時間なし（無制限）でリトライしますか？」と尋ねる。
-            *   **Yes**: `timeout` コマンドなしで直接実行する。
-            *   **No**: 処理を中断し、原因（入力待機、ロック競合等）を調査する。
-*   **その他の失敗 (`$? != 0`)**: ログファイルのパスをユーザーに通知し、解析を促します。
+## 使用例
 
-### 4. 緊急救済プロトコル (Emergency Rescue Protocol)
+```python
+# 長時間テストの例
+mcp.execute_macro(macro_id="run_tests", background=True)
+# -> { "pid": 1234, ... }
 
-エージェント自身が `ps` すら実行できない（応答がない）場合の最終手段として、以下のフローに従ってください。
-
-1.  **Agent**: 「システム応答がありません。手動で `ps -aef` (または `ps aux`) を実行し、結果を貼り付けてください」と依頼する。
-2.  **User**: ターミナルで `ps` を実行し、結果を提示する。
-3.  **Agent**: 提示されたログを解析し、停止すべきプロセスID (PID) を特定して、「`kill -9 <PID>` を実行してください」と具体的なコマンドを提示する。
-4.  **User**: 手動で `kill` を実行。
-
-## MCPでの使用例
-
-エージェントが `run_command` でこれを行う場合のテンプレート：
-
-```bash
-# 1. Clean
-pkill -f "target_process_name" || true
-
-# 2. Exec & Log (コマンド連結せず、シェルスクリプトとして渡すか、単一行でしっかり書く)
-# 以下のワンライナーは安全です（set -o pipefail を含むため）
-bash -c 'set -o pipefail; your_command 2>&1 | tee /tmp/cmd_log.txt'
+# 定期監視
+mcp.get_process_status(pid=1234)
+# -> { "running": True, "log_tail": "..." }
 ```
 
 > [!TIP]
-> 複雑な処理が必要な場合は、無理に `run_command` に詰め込まず、一時スクリプト (`safe_run.sh`) を作成してから実行することを推奨します。
+> 複雑な環境が必要な場合は、まず `macro_forger` スキルで武器を「鍛造」してから実行することを強く推奨します。

@@ -69,9 +69,10 @@ cd .gemini && git pull origin main && cd ..
 
 1.  **Gitコマンドの直接実行禁止 (No Direct Git Commit):**
     *   `run_command` 等を使って `git commit -m ...` を直接実行してはならない。必ず `git_committer` スキルの手順（一時ファイル作成等）を経由すること。
-2.  **危険なコマンド実行の禁止 (Use Safe Shell Server):**
+2.  **危険なコマンド実行の禁止 (Use Safe Shell V2):**
     *   可能な限り、生の `run_command` ではなく、MCPサーバー **`safe-shell-server` (`execute_safe`)** を使用すること。
-    *   これにより、コマンド連結の禁止、タイムアウトの強制、ログの自動保存がシステム的に保証される。
+    *   **V2 機能の活用**: 複雑なプロジェクト構造では「インテリジェント・パス解決（AUTO PYTHONPATH）」を信頼し、自律的に最適な環境で実行せよ。
+    *   単発実行だけでなく、`execute_macro` による「現場での武器の鋳造と実行」を標準的な手段として検討せよ。
 3.  **診断スキップの禁止 (No Skipping Diagnostics):**
     *   コミット前に `npm test` 及び `npm run build` を含む診断手順を省略してはならない。「軽微な修正だから大丈夫」という判断は認められない。
 4.  **自己判断によるルール変更禁止:**
@@ -109,10 +110,10 @@ cd .gemini && git pull origin main && cd ..
     *   特に `git pull && git push` のようなネットワーク通信やロック機構を伴う操作は、必ず分割して実行し、各ステップの成功を確認すること。
 2.  **事前のクリーンアップ (Pre-flight Cleanup):**
     *   長時間実行されるプロセスやロックファイルを生成するコマンド（`git`, `npm`, `python`）を実行する前には、同名のゾンビプロセスが残っていないか確認・削除することを推奨する。
-    *   `safe_commander` スキルの使用を検討せよ。
-4.  **タイムアウト設定 (Timeout Enforcement):**
-    *   すべてのコマンドは有限時間で終了しなければならない。
-    *   `safe_commander` スキルに従い、`timeout` コマンド等を用いて、ハングアップ時に自動的に制御を取り戻せるようにすること。
+    *   `safe_commander` スキルの手順に従い、`get_process_status` による内省的監視を徹底せよ。
+4.  **物理的レジリエンスの活用 (Survival Execution):**
+    - 再起動や通信断絶が懸念される長時間タスクは、`background=True` で Safe-Shell の「身体」に預けよ。
+    - 通信復旧後に `get_process_status` で結果を回収するフローを標準とせよ。
 5.  **事前のプロセス残留確認 (Mandatory Pre-flight Check):**
     *   長時間実行プロセス（サーバー、デーモン、重いスクリプト）を起動または再起動する前には、**必ず `ps` または `pgrep` で既存プロセスの有無を確認しなければならない。**
     *   「止まっているはず」という推測でコマンドを発行することを禁止する。
@@ -183,6 +184,7 @@ cd .gemini && git pull origin main && cd ..
 **C. 成果の昇格 (Promotion)**
 *   **ドキュメント:** 永続的な仕様は `docs/` へ (Git管理)。
 *   **記憶:** 開発の癖や文脈は `memory-server` へ。
+*   **武器 (Macros):** 現場で最適化した繰り返し可能な手順は、`persist=True` を用いて Safe-Shell の物理レジストリ（`/tmp/macros.json`）へ昇格させ、セッションを跨いで継承せよ。
 
 **D. 運用・保守**
 *   **可搬性:** 定期的に `export_memories` を実行し、JSONをGit管理下 (`docs/memory_backup.json` 等) に保存することで同期を補完する。
