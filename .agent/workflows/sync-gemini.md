@@ -15,7 +15,8 @@ description: .gemini (シンボリックリンク) のHooksとMCP設定を同期
 2.  `project-stock2`
 3.  `salesforce`
 4.  `gemini-docs`
-5.  (その他 `projects.json` に追記されたもの)
+5.  `wordpress`
+6.  (その他 `projects.json` に追記されたもの)
 
 ## 実行手順
 
@@ -46,6 +47,9 @@ dir="${DEV_ROOT}/salesforce"; [ -L "${dir}/.gemini" ] && cp "${dir}/.gemini/scri
 
 # 例: gemini-docs の場合
 dir="${DEV_ROOT}/gemini-docs"; [ -L "${dir}/.gemini" ] && cp "${dir}/.gemini/scripts/git-hooks/pre-commit" "${dir}/.git/hooks/" && chmod +x "${dir}/.git/hooks/pre-commit" && echo "✅ gemini-docs: Hooks適用" || echo "⚠️ gemini-docs: .geminiリンク不在またはディレクトリ不正"
+
+# 例: wordpress の場合
+dir="${DEV_ROOT}/wordpress"; [ -L "${dir}/.gemini" ] && cp "${dir}/.gemini/scripts/git-hooks/pre-commit" "${dir}/.git/hooks/" && chmod +x "${dir}/.git/hooks/pre-commit" && echo "✅ wordpress: Hooks適用" || echo "⚠️ wordpress: .geminiリンク不在またはディレクトリ不正"
 ```
 
 ### 2. MCP設定ファイルの同期

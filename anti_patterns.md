@@ -314,6 +314,37 @@ notifier.notify_success(mode, has_error=context.has_partial_failure)
 - **解決策**:
   - **Process Pair アーキテクチャ**: 実行用プロセスと、その状態（ログや進捗）を観測するチャネル（`get_process_status` 等）をペアで用意し、AI が能動的に「自分の身体」の状態を観測できるようにする。
 
+### AP-023: Deep Nesting / Avoidance of Early Return (深いネストと早期リターンの回避)
+- **問題**: 条件分岐を入れ子（Nested Ifs）にし、メインの処理をインデントの深い位置に記述する。
+- **影響**: 
+    - **推論コスト（インテリジェンス・オーバーヘッド）の増大**: AI エージェントが文脈内の「前提条件（スタック）」を過剰に保持しなければならず、ハルシネーション（スコープ誤認）や修正漏れの原因となる。
+    - **コードの不透明化**: 正常系が埋もれ、例外条件が後出しになるため、人間・AI 双方にとってデバッグが困難になる。
+- **解決策**:
+    - **ガード節（Guard Clauses）の徹底**: 例外条件やバリデーションをメソッドの冒頭で評価し、即座に `return` または `continue` する。
+    - **論理スタックの平坦化**: ネストを 2 階層以内に抑え、メインのアルゴリズムが常に最も浅いインデントで実行されるように構成する。
+
+```python
+# ❌ 悪い例: 深いネスト
+def process_data(data):
+    if data is not None:
+        if "user" in data:
+            if data["user"].is_active:
+                # 本来の処理がここに来る
+                return do_actual_work(data)
+    return False
+
+# ✅ 良い例: 早期リターンによる平坦化
+def process_data(data):
+    if not data or "user" not in data:
+        return False
+    
+    if not data["user"].is_active:
+        return False
+        
+    # 本来の処理が最も浅い階層に現れる
+    return do_actual_work(data)
+```
+
 ---
 
 ## 更新履歴
@@ -330,3 +361,4 @@ notifier.notify_success(mode, has_error=context.has_partial_failure)
 | 2026-02-11 | AP-016〜018 | Agent | コマンド連結禁止、プロセス状態確認、無限ブロックを追加（ハングアップ対策） |
 | 2026-02-12 | AP-019 | Agent | MCP設定ファイル二重管理の禁止を追加 |
 | 2026-02-23 | AP-020〜022 | Agent | shell=True禁止、findパイプ禁止、感覚遮断防止（Process Pair）を追加 |
+| 2026-02-23 | AP-023 | Agent | 深いネストと早期リターン回避の禁止（AI推論コスト対策）を追加 |
