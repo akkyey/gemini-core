@@ -368,6 +368,25 @@ def process_data(data):
     - マクロの `cmd` には、必ず仮想環境やインストール先の**絶対パス**（例: `/home/irom/dev/project/venv/bin/python3`）を指定する。
     - 環境依存を排除し、決定論的な実行環境を構築する。
 
+### AP-026: 実体のないデフォルト値指定 (False Truthiness in Dictionary Access)
+- **問題**: `dict.get(key, default)` において、キーが存在し値が `None` (`null`) の場合、デフォルト値が適用されず `None` が返される。
+- **影響**: 取得結果がイテラブル（リストや辞書）であることを期待しているコード（`for ... in ...` 等）で、`'NoneType' object is not iterable` エラーが発生し、プロセスが停止する。
+- **解決策**:
+  - `value = dict.get(key) or default` 形式を使用し、`None` の場合に確実にデフォルト値を評価させる。
+  - または、取得後に明示的な `None` チェックを行う。
+
+```python
+# ❌ 悪い例: None が返される可能性がある
+template_args = macro.get("args", [])
+for arg in template_args:  # args が null の場合に死ぬ
+    ...
+
+# ✅ 良い例: None を or で回避
+template_args = macro.get("args") or []
+for arg in template_args:  # 確実にイテレート可能
+    ...
+```
+
 ---
 
 ## 更新履歴
@@ -386,3 +405,4 @@ def process_data(data):
 | 2026-02-23 | AP-020〜022 | Agent | shell=True禁止、findパイプ禁止、感覚遮断防止（Process Pair）を追加 |
 | 2026-02-23 | AP-023 | Agent | 深いネストと早期リターン回避の禁止（AI推論コスト対策）を追加 |
 | 2026-02-25 | AP-024〜025 | Agent | Safe-Shell 回避禁止、マクロ環境依存禁止を追加 |
+| 2026-02-26 | AP-026 | Agent | 実体のないデフォルト値指定（Noneイテレーション不具合）を追加 |
