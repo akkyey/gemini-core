@@ -5,8 +5,11 @@
 ## 原則
 
 1.  **Direct Execution**: 可能な限りシェル演算子（`&&` 等）を使わず、`execute_safe` またはマクロを使用する。
-2.  **Autonomous Monitoring**: 長時間タスクは背景実行 (`background=True`) に逃がし、`get_process_status` で定期的に内省監視を行う。
+2.  **Autonomous Monitoring**: 長時間タスクは背景実行 (`background=True`) に逃がし、`get_process_status` で定期定期に内省監視を行う。
 3.  **Survival First**: サーバー再起動や通信断絶が発生しても、`State Persistence` によりプロセスを再補足するレジリエンスを維持する。
+4.  **Clean First**: 実行前に「場をきれいにする」。古いプロセスやロックファイルは敵である。
+5.  **Predictive Resources**: 実行前に必要なリソース（CPU, メモリ, 時間）を予測し、天井ではなく枠として宣言する。
+6.  **Log Always**: 標準出力・エラー出力はすべてファイルに残す。ターミナルバッファに頼らない。
 
 ## 手順
 
