@@ -115,6 +115,11 @@ cd .gemini && git pull origin main && cd ..
 5.  **揮発的識別情報の動的注入 (Volatile Identity Generation):**
     *   Identity（Git User, API Keys）を必要とする操作において、情報の永続化（ハードコード）を避ける。
     *   実行の都度、一時的なコンフィグファイルを動的に生成・注入し、終了後に破棄する設計を標準パターンとする。
+
+6.  **リモート環境との視覚同期 (AI Vision Synchronization):**
+    *   リモートホスト（WordPress 等）の開発において AI の「視覚」を確保するため、SSH リバーストンネルを活用せよ。
+    *   **手法**: ホスト側のブラウザ（Chrome 等）を SSH トンネル経由でリモートポートへ接続し、Safe-Shell マクロと組み合わせて AI エージェントへ視覚情報をフィードバックする。
+    *   これにより、ヘッドレス環境では観測不可能な動的挙動やスタイル崩れを、実機ブラウザの「目」を通じて正確に把握できる。
 ---
 
 ## 4. コマンド実行の安全性 (Command Execution Safety)

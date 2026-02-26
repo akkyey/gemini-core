@@ -292,6 +292,25 @@ notifier.notify_success(mode, has_error=context.has_partial_failure)
 
 ---
 
+## AI・ブラウザ操作
+
+### AP-020: AI Observability Block (観察者ハングアップ)
+- **問題**: `html, body { height: 100%; overflow: hidden; }` 等のスタイルにより、ブラウザのスクロール挙動が制限、または要素が viewport 外に固定される。
+- **影響**: AI エージェントの `read_browser_page` や `screenshot` が全体のコンテンツを捕捉できず、無限ループや情報の見落としが発生する。
+- **解決策**: 開発時は最上位要素の高さ制限を取り払い、ブラウザ本来のスクロール可能性を維持する（構造的統治）。
+
+### AP-021: systemd Linger Missing (自律動作の停止)
+- **問題**: systemd ユーザータイマーを使用している環境で、Linger が無効。
+- **影響**: ユーザーがログアウトするとタイマーが停止し、深夜のバッチ処理等が実行されない。
+- **解決策**: `loginctl enable-linger <user>` を設定し、セッション永続化を確認する。
+
+### AP-022: Pipe Hang in Find (findコマンドのハングアップ)
+- **問題**: `find ... | xargs ...` や `find ... | grep ...` のように、find の出力を直接パイプで連鎖させる。
+- **影響**: 特定の環境（ファイル数が多い、または Safe-Shell V2 のバッファ制約）でプロセスがハングアップする。
+- **解決策**: `-exec` オプション（例: `find ... -exec ... {} +`）を使用してアトミックに実行する。
+
+---
+
 ## 更新履歴
 
 | 日付 | ID | 追加者 | 概要 |
@@ -305,3 +324,4 @@ notifier.notify_success(mode, has_error=context.has_partial_failure)
 | 2026-02-11 | AP-013〜015 | Agent | 環境依存、リソース解決、テスト待機に関するアンチパターンを追加（project-stock2統合） |
 | 2026-02-11 | AP-016〜018 | Agent | コマンド連結禁止、プロセス状態確認、無限ブロックを追加（ハングアップ対策） |
 | 2026-02-12 | AP-019 | Agent | MCP設定ファイル二重管理の禁止を追加 |
+| 2026-02-26 | AP-020〜022 | Agent | 観察者ハングアップ、Linger設定漏れ、findパイプハングを追加（wordpress/stock2統合） |
