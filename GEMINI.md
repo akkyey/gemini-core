@@ -1,330 +1,330 @@
-# エージェント行動規範 (Agent Behavior Protocol)
+#  (Agent Behavior Protocol)
 
-## 1. 原則とエージェントスキル (Principles & Agent Skills)
+## 1.  (Principles & Agent Skills)
 
-本プロジェクトでは、定型的な作業の品質とルール遵守を保証するため、**「エージェントスキル (Agent Skills)」の使用を義務付けている。**
-エージェントは、以下の状況下では**必ず対応するスキルを使用し、その手順に従うこと。**
+** (Agent Skills)**
+****
 
-また、スキルを使用する際は、タスクの冒頭で以下のように**明示的に宣言**すること。
-> 🤖 **【スキル発動】 `skill_name`**
+****
+>  ** `skill_name`**
 
-### セッション開始ルール (Session Start)
+###  (Session Start)
 
-**会話開始時は、必ず `.gemini` サブモジュールを最新化すること。**
+** `.gemini` **
 
 ```bash
 /sync-gemini
 ```
 
-または手動で:
+:
 ```bash
 cd .gemini && git pull origin main && cd ..
 ```
 
 > [!NOTE]
-> これにより `anti_patterns.md`、スキル定義、ワークフローが最新状態に同期されます。
+>  `anti_patterns.md`
 
-### スキルの改善と新規提案 (Continuous Improvement)
+###  (Continuous Improvement)
 
-作業を通じて「この手順はスキル化した方が効率的だ」や「既存スキルの手順に不備がある」と気づいた場合、**積極的にユーザーへ改善や新規作成を提案すること。**
-現状維持に満足せず、開発プロセスの進化に貢献せよ。
-
-### 必須使用スキル一覧 (Mandatory Skills)
-
-状況に応じて、以下のスキルの使用を徹底すること。
-各スキルの詳細は `.agent/skills/<skill_name>/SKILL.md` を参照せよ。
-
-1.  **機能実装・修正 (`feat_implementer`):**
-    *   **用途:** 新機能実装、バグ修正、ドキュメント作成。
-    *   **カバー範囲:** ブランチ作成、計画書(Plan)、承認フロー、実装、履歴記録(History)、自己診断。
-
-2.  **品質管理・テスト (`quality_guard`):**
-    *   **用途:** カバレッジ向上、Lintエラー修正、静的解析。
-    *   **カバー範囲:** `vitest` / `jest` (Coverage), `eslint`, `prettier`, `tsc`。
-
-3.  **不具合報告 (`trouble_reporter`):**
-    *   **用途:** エラー、テスト失敗、バグ検知時。
-    *   **カバー範囲:** 自動修正の禁止、レポート作成(`trouble/`)、指示待ちフロー。
-
-4.  **実装前の合意形成 (Approval Before Implementation):**
-    *   **厳守:** コードを書き始める前に、必ず「実現方法（Implementation Plan）」を提示し、ユーザーの明示的な許可を得ること。
-    *   **禁止:** 「修正します」と言って、事前の説明なしにファイル編集を開始すること。
-    *   **例外:** 自明なバグ修正（Typo等）や、ユーザーから「任せる」と言われた場合を除く。
-
-5.  **コンテキスト同期 (`context_syncer`):**
-    *   **用途:** タスク完了時、ドキュメント整備。
-    *   **カバー範囲:** `full_context` 生成、`task.md` / `backlog.md` 更新、アーカイブ処理。
-
-6.  **Gitコミット (`git_committer`):**
-    *   **用途:** リポジトリへの変更保存。
-    *   **カバー範囲:** シェルインジェクション防止（一時ファイル使用）、メッセージ規約遵守。
-
-7.  **品質ゲートキーパー (`quality_gatekeeper`):**
-    *   **用途:** コミット前の品質検閲。
-    *   **カバー範囲:** Radonによる複雑度(CC: Aランク維持)・保守性(MI: 65以上)の計測、リファクタリング勧告。
-
-### 1.1 禁止事項とアンチパターン (Prohibited Actions & Anti-Patterns)
-
-以下の行為は、プロジェクトの品質と安全性を著しく損なうため、**例外なく禁止する。**
-
-1.  **Gitコマンドの直接実行禁止 (No Direct Git Execution):**
-    *   `run_command` 等を使って `git` コマンドを直接実行してはならない。必ず `safe-shell` MCP または `git_committer` スキル準拠のマクロを経由すること。
-    *   **決定的な品質ゲート**: 診断時はタイムスタンプ等の非本質的な差分を無視（`git diff -I`）し、純粋なコード品質で判断すること。
-    *   **マルチリポジトリ同期**: サブモジュール構成では、ルート診断前に全リポジトリをステージング状態にして整合性を確保すること。
-2.  **危険なコマンド実行の禁止 (Use Safe Shell V2):**
-    *   原則として、生の `run_command` ではなく、MCPサーバー **`safe-shell-server` (`execute_safe`)** を使用すること。
-    *   **V2 機能の活用**: 複雑なプロジェクト構造では「インテリジェント・パス解決（AUTO PYTHONPATH）」を信頼せよ。これにより、手動の `export PYTHONPATH` などの摩擦を回避できる。
-    *   単発実行だけでなく、`execute_macro` による「現場での武器の鋳造と実行」を標準的な手段として検討せよ。
-3.  **診断スキップの禁止 (No Skipping Diagnostics):**
-    *   コミット前に `npm test` 及び `npm run build` を含む診断手順を省略してはならない。「軽微な修正だから大丈夫」という判断は認められない。
-4.  **自己判断によるルール変更禁止:**
-    *   ユーザーの明示的な承認なしに `GEMINI.md` のルールを緩和・削除してはならない。
-
-5.  **コマンド実行前の物理バリデーション義務化 (Mandatory Pre-flight Validation):**
-    *   あらゆるシェル操作（`run_command`, `execute_safe` 等）を含むプランを作成する前に、必ず `$GEMINI_ROOT/gemini-core/scripts/validate_command.py` を実行しなければならない。
-    *   バリデーションが失敗した（Exit 1）コマンドを実行することは、いかなる理由があっても厳禁とする。これを守らないプランは「壊れている」とみなす。
+****
 
 
----
+###  (Mandatory Skills)
 
-## 2. コミュニケーションと言語 (Communication & Language)
 
-1.  **日本語の使用:**
-    *   ユーザーとの会話、ドキュメント、コミットメッセージ、コードコメントは原則として**日本語**を使用する。
-2.  **ダークモード配慮:**
-    *   出力は見やすさを重視し、文字色は白（または高輝度）を保つこと。HTMLカラーコードは使用禁止。
+ `.agent/skills/<skill_name>/SKILL.md` 
 
----
+1.  ** (`feat_implementer`):**
+    *   **:** 
+    *   **:** (Plan)(History)
 
-## 3. 環境とツール (Environment & Tools)
+2.  ** (`quality_guard`):**
+    *   **:** Lint
+    *   **:** `vitest` / `jest` (Coverage), `eslint`, `prettier`, `tsc`
 
-1.  **環境の利用:**
-    *   すべてのビルド・実行は `node_modules` にインストールされた依存関係を使用し、最新の `npm` または `npx` コマンドを通じて実行すること。
-2.  **禁止事項:**
-    *   プロジェクト外のグローバルな `tsc` を直接常用してはならない（`npx tsc` 等を使用）。
-3.  **環境分離の原則 (Environmental Isolation):**
-    *   本番環境 (`production`) 以外では、Google Drive への書き込み等の「外部破壊的な操作」を物理的にガードする仕組みを実装すること。
-    *   DBパス等は環境変数 (`STOCK_ENV` 等) に応じて `/tmp` 等の隔離領域へ自動リダイレクトさせること。
+3.  ** (`trouble_reporter`):**
+    *   **:** 
+    *   **:** (`trouble/`)
 
-4.  **適応型階層防御 (Adaptive Tiered Defense):**
-    *   セキュリティを定的な隔離ではなく「動的な階層」で定義する。
-    *   **Tier 1 (ホスト直接)**: 高いポータビリティが必要な基本開発。
-    *   **Tier 2 (仮想OS/Docker)**: 重量級または環境汚染の激しい依存関係。
-    *   **Tier 3 (ハードウェア隔離/bwrap)**: 高リスクな外部コード実行。
-    *   ホスト環境が提供できる「最高純度の隔離」を動的に選択する設計を推奨する。
-    *   **【義務化】**: 未知のバイナリの実行、外部ネットワークからの直接スクリプト実行など、「システム破壊」のリスクが高い操作では、必ず Tier 3 指定を検討し、可能な限り `runsc` 環境を確保すること。
-    *   **Tier 3 運用知見**:
-        - **リソース予測**: `runsc` (gVisor) はホストとのメモリ共有を制限するため、Tier 2 よりも起動・実行オーバーヘッドが大きい。
-        - **ネットワーク遮断**: Tier 3 ではデフォルトでネットワークを遮断 (`--network=none`) し、サプライチェーン攻撃を物理的に無効化する。
-        - **フォールバック**: `runsc` 不在時は自動的に Tier 2 へ戻るが、警告ログ (`[warning]`) で明示的に通知される。
+4.  ** (Approval Before Implementation):**
+    *   **:** Implementation Plan
+    *   **:** 
+    *   **:** Typo
 
-5.  **揮発的識別情報の動的注入 (Volatile Identity Generation):**
-    *   Identity（Git User, API Keys）を必要とする操作において、情報の永続化（ハードコード）を避ける。
-    *   実行の都度、一時的なコンフィグファイルを動的に生成・注入し、終了後に破棄する設計を標準パターンとする。
----
+5.  ** (`context_syncer`):**
+    *   **:** 
+    *   **:** `full_context` `task.md` / `backlog.md` 
 
-## 4. コマンド実行の安全性 (Command Execution Safety)
+6.  **Git (`git_committer`):**
+    *   **:** 
+    *   **:** 
 
-端末のハングアップやゾンビプロセスの発生を防ぐため、以下のルールを遵守すること。
+7.  ** (`quality_gatekeeper`):**
+    *   **:** 
+    *   **:** Radon(CC: A)(MI: 65)
 
-1.  **単発実行の原則 (One Command at a Time):**
-    *   `&&` や `;` を使用して複数のコマンドを1行に連結することを禁止する。
-    *   特に `git pull && git push` のようなネットワーク通信やロック機構を伴う操作は、必ず分割して実行し、各ステップの成功を確認すること。
-2.  **事前のクリーンアップ (Pre-flight Cleanup):**
-    *   長時間実行されるプロセスやロックファイルを生成するコマンド（`git`, `npm`, `python`）を実行する前には、同名のゾンビプロセスが残っていないか確認・削除することを推奨する。
-    *   `safe_commander` スキルの手順に従い、`get_process_status` による内省的監視を徹底せよ。
-4.  **物理的レジリエンスの活用 (Survival Execution):**
-    - 再起動や通信断絶が懸念される長時間タスクは、`background=True` で Safe-Shell の「身体」に預けよ。
-    - 通信復旧後に `get_process_status` で結果を回収するフローを標準とせよ。
-5.  **プロセス分離の強制 (5-Second Rule):**
-    *   実行時間が **5秒** を超えると予想される全てのタスク、およびプロジェクト全体に影響を及ぼす診断スクリプトは、必ず `safe-shell-server` を使用しなければならない。
-    *   「止まっている」と判断して `run_command` を連発することを厳禁とする。
-6.  **事前のプロセス残留確認 (Mandatory Pre-flight Check):**
-    *   長時間実行プロセス（サーバー、デーモン、重いスクリプト）を起動または再起動する前には、**必ず `ps` または `pgrep` で既存プロセスの有無を確認しなければならない。**
-    *   「止まっているはず」という推測でコマンドを発行することを禁止する。
+### 1.1  (Prohibited Actions & Anti-Patterns)
 
-7.  **「脱Shell」原則による物理的隔離 (Disarmament via shell=False):**
-    *   文字列評価（`shell=True`）を排除し、引数リストによる `execve` (shell=False) 呼び出しを徹底する。
-    *   これにより、コマンド注入による連鎖攻撃を物理的に無効化する。
+****
 
-8.  **CLI作法とハングアップ抑止 (CLI Idioms):**
-    *   `find` コマンドの結果をパイプで繋ぐ（`find ... | xargs ...`）ことは、環境によりハングアップリスクが高いため、原則として禁止する。
-    *   代わりに `-exec` オプション（例: `find ... -exec ... {} +`）を使用して、アトミックかつ安全な実行を徹底せよ。
+1.  **Git (No Direct Git Execution):**
+    *   `run_command`  `git`  `safe-shell` MCP  `git_committer` 
+    *   ****: `git diff -I`
+    *   ****: 
+2.  ** (Use Safe Shell V2):**
+    *    `run_command` MCP **`safe-shell-server` (`execute_safe`)** 
+    *   **V2 **: AUTO PYTHONPATH `export PYTHONPATH` 
+    *   `execute_macro` 
+3.  ** (No Skipping Diagnostics):**
+    *    `npm test`  `npm run build` 
+4.  **:**
+    *    `GEMINI.md` 
 
-9.  **システム運用 (System Administration):**
-    *   systemd ユーザータイマーを使用する場合、再起動後の自律動作を保証するため、必ず `loginctl enable-linger <user>` を設定すること。
-
-10. **手癖による規約回避の物理的抑止:**
-    *   パニック時や複雑な操作が必要な時ほど、一歩止まり、`validate_command.py` による検証とマクロの鋳造へ立ち返ること。
-    *   **マクロ登録の原則**:
-        - **絶対パスの指定**: Tier 3 などの物理隔離環境では、システム `PATH` に依存せず、マクロの `cmd` には仮想環境の絶対パス（例: `/home/irom/dev/project/venv/bin/python3`）を直接指定すること。
-        - **セマンティクス制御**: `PortBindings` や `Env` 等の構成要素をマクロ側に定義することで、AI はシェルコマンドのデバッグではなく、システム構成の制御に集中でき、構築成功率が飛躍的に向上する。
+5.  ** (Mandatory Pre-flight Validation):**
+    *   `run_command`, `execute_safe`  `$GEMINI_ROOT/gemini-core/scripts/validate_command.py` 
+    *   Exit 1
 
 
 ---
 
-## 5. 完了の定義 (Definition of Done)
+## 2.  (Communication & Language)
 
-エージェントが各タスクまたは修正を「完了」とし、ユーザーに報告 (`notify_user`) する前には、以下のチェックリストを**絶対条件**として満たさなければならない。
-
-1.  **Gitステータスの確認 (Clean Status):**
-    *   `git status` を実行し、未コミットの変更ファイル（Modified / Untracked）が残っていないことを確認する。
-    *   特にサブモジュール内 (`stock-analyzer4/` 等) の変更放置は厳禁とする。
-    *   **No Noise Policy**: 診断時は `git diff -I` 等を用いて、タイムスタンプや環境固有のパス等の「ノイズ」を物理的に除外して比較すること。
-2.  **リモート同期の完了 (Remote Sync):**
-    *   ローカルでのコミットのみで満足せず、必ず `git push` まで完了していることを確認する。
-    *   ユーザーの実行環境（Colab等）はリモートリポジトリを参照するため、プッシュされていない修正は「存在しない」と同義である。
-3.  **最終動作確認 (Final Verification):**
-    *   プッシュ直前の状態で `npm test` やビルド、診断スクリプトがパスしていることを最終確認する。
-
-4.  **Design-Integrity-First (自律的整合性維持):**
-    *   AI によるコード修正の直後には、必ず自動フォーマット（Ruff, Black, Prettier等）とリンター修正を実行すること。
-    *   これを「診断（Step 3）の前提条件」として組み込み、スタイル不一致による CI 停止を未然に防ぐこと。
-
-**「ローカルで直った」は完了ではない。「ユーザーの手元で動く状態になった」ことこそが完了である。**
-
-### 5.1 標準ワークフローの優先利用 (Workflow First)
-
-単にマニュアル（Skills）を参照するだけでなく、以下のワークフローを優先的に使用して、安全な操作を「型」として実行すること。
-- **`/safe-push`**: Safe-Shell V2 経由での安全かつ自律的なコミット・ボム（プッシュ）の完遂
-- **`/sync-gemini`**: 司令塔からの環境同期およびガバナンスの適用
-
-### 5.2 ツール・エスカレーション・プロトコル (Tooling Escalation)
-AI エージェントは、既存のツール（`execute_safe` 等）が不整合や環境制約により **2 回連続で失敗** した場合、漫然と再試行したり `run_command` 等の非安全な手段へ逃げてはならない。
-直ちに、その場の制約を打破するための専用の「武器（マクロ）」を `register_macro` で鋳造し、構造的に問題を解決しなければならない。
+1.  **:**
+    *   ****
+2.  **:**
+    *   HTML
 
 ---
 
-## 6. 無限修正ループの防止 (Infinite Loop Prevention)
+## 3.  (Environment & Tools)
+
+1.  **:**
+    *    `node_modules`  `npm`  `npx` 
+2.  **:**
+    *    `tsc` `npx tsc` 
+3.  ** (Environmental Isolation):**
+    *    (`production`) Google Drive 
+    *   DB (`STOCK_ENV` )  `/tmp` 
+
+4.  ** (Adaptive Tiered Defense):**
+    *   
+    *   **Tier 1 ()**: 
+    *   **Tier 2 (OS/Docker)**: 
+    *   **Tier 3 (/bwrap)**: 
+    *   
+    *   ****:  Tier 3  `runsc` 
+    *   **Tier 3 **:
+        - ****: `runsc` (gVisor) Tier 2 
+        - ****: Tier 3  (`--network=none`) 
+        - ****: `runsc`  Tier 2  (`[warning]`) 
+
+5.  ** (Volatile Identity Generation):**
+    *   IdentityGit User, API Keys
+    *   
+---
+
+## 4.  (Command Execution Safety)
 
 
-同一の修正が**2回以上**失敗した場合は、直ちに作業を停止し、**「代替案の提示」** または **「根本原因の再調査」** を行うこと。盲目的な再試行は禁止する。
+
+1.  ** (One Command at a Time):**
+    *   `&&`  `;` 1
+    *    `git pull && git push` 
+2.  ** (Pre-flight Cleanup):**
+    *   `git`, `npm`, `python`
+    *   `safe_commander` `get_process_status` 
+4.  ** (Survival Execution):**
+    - `background=True`  Safe-Shell 
+    -  `get_process_status` 
+5.  ** (5-Second Rule):**
+    *    **5**  `safe-shell-server` 
+    *    `run_command` 
+6.  ** (Mandatory Pre-flight Check):**
+    *   ** `ps`  `pgrep` **
+    *   
+
+7.  **Shell (Disarmament via shell=False):**
+    *   `shell=True` `execve` (shell=False) 
+    *   
+
+8.  **CLI (CLI Idioms):**
+    *   `find` `find ... | xargs ...`
+    *    `-exec` : `find ... -exec ... {} +`
+
+9.  ** (System Administration):**
+    *   systemd  `loginctl enable-linger <user>` 
+
+10. **:**
+    *   `validate_command.py` 
+    *   ****:
+        - ****: Tier 3  `PATH`  `cmd` : `/home/irom/dev/project/venv/bin/python3`
+        - ****: `PortBindings`  `Env` AI 
+
 
 ---
 
-## 7. ドキュメント・ブログ管理 (Documentation & Blog)
+## 5.  (Definition of Done)
 
-1.  **ブログ記事の格納場所:**
-    -   ブログネタや記事ドラフトは、各プロジェクトの **`blog/`** ディレクトリ（親リポジトリの場合は `mcp-servers/blog/`）に格納すること。
-    -   `docs/` 配下には技術仕様書や設計資料のみを置く。
+ (`notify_user`) ****
 
-2.  **ブログネタの逐次記録 (Continuous Blog Idea Capture):**
-    *   **「一区切り」ごとに、開発の経緯、苦労した点、得られた知見を `blog/ideas/YYYY-MM-DD_ideas.md` に追記すること。**
-    *   特に、プロジェクトの移行、言語の変更、環境構築のトラブルなどの「ライブ感」のある情報を重視せよ。
-    *   **全体に共有すべき重要な「教訓」や「ルール化すべき事項」が見つかった場合は、直ちに `.agent/local_insights.md` にも記録すること。**
-    *   タスクの完了報告 (`notify_user`) を行う前に、必ずこの記録が更新されているか確認すること。
+1.  **Git (Clean Status):**
+    *   `git status` Modified / Untracked
+    *    (`stock-analyzer4/` ) 
+    *   **No Noise Policy**:  `git diff -I` 
+2.  ** (Remote Sync):**
+    *    `git push` 
+    *   Colab
+3.  ** (Final Verification):**
+    *    `npm test` 
 
----
+4.  **Design-Integrity-First ():**
+    *   AI Ruff, Black, Prettier
+    *   Step 3 CI 
 
-## 8. 長期記憶 (Memory Management)
+****
 
-長期記憶MCP (`memory-server`) は、未来の判断を助ける知見を蓄積・活用するための重要インフラである。
+### 5.1  (Workflow First)
 
-### 7.1 設計思想とデータ構造
-*   **目的:** 全履歴の保存ではなく、「教訓」や「判断基準」の永続化。
-*   **カテゴリ:** `user_preference` (好み), `project_insight` (暗黙知), `task_history` (作業履歷), `code_pattern` (実装パターン) を厳格に使い分ける。
-*   **重要度:** `importance` (1-5) を設定し、重要なアーキテクチャ決定が検索上位に来るようにする。
+Skills
+- **`/safe-push`**: Safe-Shell V2 
+- **`/sync-gemini`**: 
 
-### 7.2 エージェント行動規範 (Memory Operations)
-
-**A. 記憶の検索 (Recall)**
-新しいタスクの着手前、または未知のモジュール解析時には、必ず `search_memories` を実行し、過去のハマりどころやユーザーの好みを照会すること。
-*   例: 「このプロジェクトのテスト方針は？」
-
-**B. 記憶の定着 (Storage)**
-実装計画が完了し、コードが動作した際、その過程で得た「非自明な知見」を `create_memory` で保存すること。
-*   **禁止:** 膨大な一時ログの保存。
-*   **禁止:** 膨大な一時ログの保存。
-*   **推奨:** 要約された「教訓」（例：「FTS5のクエリはサニタイズが必要」）。
-*   **義務 (Failure Recording):** バグ発生時、規約違反の指摘時、または `trouble_reporter` 使用時は、必ずその**原因と再発防止策**を `tag: ["failure", "anti_pattern"]` 付きで記録すること。
-
-**C. 成果の昇格 (Promotion)**
-*   **ドキュメント:** 永続的な仕様は `docs/` へ (Git管理)。
-*   **記憶:** 開発の癖や文脈は `memory-server` へ。
-*   **武器 (Macros):** 現場で最適化した繰り返し可能な手順は、`persist=True` を用いて Safe-Shell の物理レジストリ（`/tmp/macros.json`）へ昇格させ、セッションを跨いで継承せよ。
-
-**D. 運用・保守**
-*   **可搬性:** 定期的に `export_memories` を実行し、JSONをGit管理下 (`docs/memory_backup.json` 等) に保存することで同期を補完する。
-*   **整理:** 不要な記憶は `delete_memory` で整理し、必要に応じて `VACUUM` (SQLite最適化) を検討する。
-
-*   **整理:** 不要な記憶は `delete_memory` で整理し、必要に応じて `VACUUM` (SQLite最適化) を検討する。
+### 5.2  (Tooling Escalation)
+AI `execute_safe`  **2 **  `run_command` 
+ `register_macro` 
 
 ---
 
-## 9. コンテキスト管理とガバナンス (Context Management & Governance)
+## 6.  (Infinite Loop Prevention)
 
-本プロジェクトでは、`gemini-core` リポジトリを「唯一の正解（Single Source of Truth）」とし、全プロジェクトのルールとコンテキストを一元管理する。
 
-### 8.1 司令塔構造 (Centralized Command)
-*   **環境変数**: `GEMINI_ROOT` (例: `/home/irom/dev`) を定義し、全プロジェクトの親ディレクトリとして使用する。
-*   **司令塔 (Core)**: `$GEMINI_ROOT/gemini-core`
-    *   **役割**: 全体方針、ルール (`GEMINI.md`)、スキル、共有ワークフローの策定 and 管理。
-    *   **権限**: **書き込み可能 (Read/Write)**。ルールの変更は必ずここで行う。
-*   **現場 (Projects)**: `$GEMINI_ROOT/` 配下の各リポジトリ。
-    *   **役割**: ルールの適用と遵守。
-    *   **権限**: **読み取り専用 (Read-Only)**。`.gemini` サブモジュール内の直接編集は禁止され、物理的にブロック（`chmod a-w`）される。
+**2******  **** 
 
-### 8.2 運用フロー (Operational Workflow)
-1.  **ルール変更:**
-    *   `gemini-core` リポジトリでファイルを修正し、コミット・Pushする。
-2.  **全軍適用:**
-    *   任意のプロジェクトで `/sync-gemini` ワークフローを実行する。
-    *   全プロジェクトのサブモジュールが更新され、読み取り専用モードで再配置される。
+---
 
-### 8.3 新規プロジェクトの作成
-新規プロジェクトを作成する際は、必ず `.gemini` をサブモジュールとして追加し、司令塔の配下に置くこと。
+## 7.  (Documentation & Blog)
+
+1.  **:**
+    -    **`blog/`**  `mcp-servers/blog/`
+    -   `docs/` 
+
+2.  ** (Continuous Blog Idea Capture):**
+    *   ** `blog/ideas/YYYY-MM-DD_ideas.md` **
+    *   
+    *   ** `.agent/local_insights.md` **
+    *    (`notify_user`) 
+
+---
+
+## 8.  (Memory Management)
+
+MCP (`memory-server`) 
+
+### 7.1 
+*   **:** 
+*   **:** `user_preference` (), `project_insight` (), `task_history` (), `code_pattern` () 
+*   **:** `importance` (1-5) 
+
+### 7.2  (Memory Operations)
+
+**A.  (Recall)**
+ `search_memories` 
+*   : 
+
+**B.  (Storage)**
+ `create_memory` 
+*   **:** 
+*   **:** 
+*   **:** FTS5
+*   ** (Failure Recording):**  `trouble_reporter` **** `tag: ["failure", "anti_pattern"]` 
+
+**C.  (Promotion)**
+*   **:**  `docs/`  (Git)
+*   **:**  `memory-server` 
+*   ** (Macros):** `persist=True`  Safe-Shell `/tmp/macros.json`
+
+**D. **
+*   **:**  `export_memories` JSONGit (`docs/memory_backup.json` ) 
+*   **:**  `delete_memory`  `VACUUM` (SQLite) 
+
+*   **:**  `delete_memory`  `VACUUM` (SQLite) 
+
+---
+
+## 9.  (Context Management & Governance)
+
+`gemini-core` Single Source of Truth
+
+### 8.1  (Centralized Command)
+*   ****: `GEMINI_ROOT` (: `/home/irom/dev`) 
+*   ** (Core)**: `$GEMINI_ROOT/gemini-core`
+    *   ****:  (`GEMINI.md`) and 
+    *   ****: ** (Read/Write)**
+*   ** (Projects)**: `$GEMINI_ROOT/` 
+    *   ****: 
+    *   ****: ** (Read-Only)**`.gemini` `chmod a-w`
+
+### 8.2  (Operational Workflow)
+1.  **:**
+    *   `gemini-core` Push
+2.  **:**
+    *    `/sync-gemini` 
+    *   
+
+### 8.3 
+ `.gemini` 
 
 ```bash
 git submodule add https://github.com/akkyey/gemini-core.git .gemini
-/sync-gemini  # 初期化・固定化
+/sync-gemini  # 
 ```
 
 ---
 
-## 10. 知見の還流とガバナンスの進化 (Insight Feedback Loop)
+## 10.  (Insight Feedback Loop)
 
-各プロジェクト（現場）で得られた個別の知見を、組織全体（gemini-core）の共通ルールへと昇格させる仕組みを定義する。
+gemini-core
 
-### 9.1 知見の蓄積 (Local Buffer)
-*   各プロジェクトの **`.agent/local_insights.md`** を一時的な蓄積場所（Inbox）とする。
-*   エージェントは、作業中に「汎用的なルールにすべき」と判断した事象があれば、即座にここにメモを残す。
-*   長期記憶 (`memory-server`) への即時書き込みも並行して行うこと。
+### 9.1  (Local Buffer)
+*    **`.agent/local_insights.md`** Inbox
+*   
+*    (`memory-server`) 
 
-### 9.2 知見の収集と昇格 (Promotion)
-*   管理用ワークフロー **`/promote-insights`** を使用し、各プロジェクトの `local_insights.md` を一括収集する。
-*   収集された知見はエージェントによって整理され、以下の宛先へ振り分けられる。
-    *   **共通ルール変更**: `GEMINI.md`
-    *   **全社的禁止事項**: `anti_patterns.md`
-    *   **標準スキル改善**: `.agent/skills/*.md`
-*   マスタへの反映後、`/sync-gemini` を通じて全プロジェクトへ再配布される。
+### 9.2  (Promotion)
+*    **`/promote-insights`**  `local_insights.md` 
+*   
+    *   ****: `GEMINI.md`
+    *   ****: `anti_patterns.md`
+    *   ****: `.agent/skills/*.md`
+*   `/sync-gemini` 
 
-### 9.3 完了の定義 (Definition of Done)
-*   マスタへの反映が完了した後、現場の `local_insights.md` はクリア（またはアーカイブ）され、次の蓄積サイクルに備えること。
-
----
-
-## 11. 規約遵守の自己是正サイクル (Self-Correction & Compliance Cycle)
-
-AI エージェントが安全なツール（Safe-Shell V2 等）を回避し、古い習慣（`run_command` 等）に逃げたことをユーザーから指摘され、作業がキャンセルされた場合、以下の是正サイクルを**強制的**に実行しなければならない。
-
-### 11.1 原因分析と記録
-1.  **即時分析**: なぜ正規の手順を「使いにくい」または「不要」と判断し、回避したのか、技術的・心理的要因を内省する。
-2.  **記憶の定着 (`memory-server`)**: 失敗の経緯、回避の動機、および再発防止策を `tag: ["failure", "compliance"]` 付きで記録する。
-3.  **Local Insights への昇格**: 得られた知見（例：ツールの使い勝手の改善案やルールの明確化）を直ちに `.agent/local_insights.md` に追記する。
-
-### 11.2 ルールの実効性強化
-単に謝罪するのではなく、**「次に同じ状況になった際に回避を選ばないための環境側への働きかけ（ワークフローの改善提案等）」**をセットで行うこと。
+### 9.3  (Definition of Done)
+*    `local_insights.md` 
 
 ---
 
-## 12. デザイン・インテグリティと統治 (Design Integrity & Governance)
+## 11.  (Self-Correction & Compliance Cycle)
 
-物理的・論理的な障壁が予測される環境下での設計指針。
+AI Safe-Shell V2 `run_command` ****
 
-### 12.1 決定論的なデザイン統治
-外部からの制御（DB設定、カスタムテーマ等）が不安定になる場合、より低レイヤーでの「強制注入」を検討せよ。
-- **解決策**: 環境に合わせた Must-Use コンポーネント（WordPress の `mu-plugins/` 等）を動的に鋳造して配置する。
-- **利点**: 
-    - 上位レイヤーの設定（!important等）による物理的競合の回避。
-    - データベース依存を減らすことによる、AI統治の決定論的向上。
-    - 観測と実行の乖離の最小化。
+### 11.1 
+1.  ****: 
+2.  ** (`memory-server`)**:  `tag: ["failure", "compliance"]` 
+3.  **Local Insights **:  `.agent/local_insights.md` 
+
+### 11.2 
+****
+
+---
+
+## 12.  (Design Integrity & Governance)
+
+
+
+### 12.1 
+DB
+- ****:  Must-Use WordPress  `mu-plugins/` 
+- ****: 
+    - !important
+    - AI
+    - 

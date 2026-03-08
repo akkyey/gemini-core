@@ -13,7 +13,7 @@ Contains the **Rules of Engagement (`GEMINI.md`)** and **Agent Skills (`.agent/`
 
 ---
 
-## 🤖 For Agents: How to Initialize a New Project
+##  For Agents: How to Initialize a New Project
 
 ### 1. Clone & Detach (Template Mode)
 Use this when starting a completely new project.
@@ -35,7 +35,7 @@ Use this when starting a completely new project.
 
 ---
 
-## 🔧 For Existing Projects (Submodule Mode)
+##  For Existing Projects (Submodule Mode)
 
 If you are adding standard rules to an existing project:
 
@@ -56,7 +56,7 @@ If you are adding standard rules to an existing project:
 
 ---
 
-## 🔄 Contribution & Feedback Loop (How to Improve)
+##  Contribution & Feedback Loop (How to Improve)
 
 Standard rules and skills should evolve based on project feedback.
 

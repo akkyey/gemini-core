@@ -1,27 +1,27 @@
-# アンチパターン一覧 (Anti-Pattern Catalog)
+#  (Anti-Pattern Catalog)
 
-本ファイルは、開発中に発見されたアンチパターンを蓄積する共通ファイルです。
-**リファクタリング時およびコミット時に参照**し、同じ問題の再発を防止します。
+
+****
 
 > [!NOTE]
-> 新しいアンチパターンを発見した場合、このファイルに追記してコミット＆プッシュしてください。
+> 
 
 ---
 
-## 設定管理
+## 
 
-### AP-001: 設定ロジックの重複
-- **問題**: 同じ設定値（環境変数、CLI引数など）を複数箇所で参照している
-- **影響**: 修正漏れ、不整合、保守困難
-- **解決策**: 一箇所（CONFIG オブジェクト等）に集約する
+### AP-001: 
+- ****: CLI
+- ****: 
+- ****: CONFIG 
 
 ```typescript
-// ❌ 悪い例
+//  
 const name1 = process.env.PROJECT_NAME || 'default';
-// ... 100行後 ...
-const name2 = process.env.PROJECT_NAME || 'default'; // コピペ
+// ... 100 ...
+const name2 = process.env.PROJECT_NAME || 'default'; // 
 
-// ✅ 良い例
+//  
 const CONFIG = {
   projectName: process.env.PROJECT_NAME || 'default',
 } as const;
@@ -29,47 +29,47 @@ const CONFIG = {
 
 ---
 
-## プロセスライフサイクル
+## 
 
-### AP-002: stdin 終了未監視（MCP サーバー）
-- **問題**: MCPクライアントが接続を切断してもプロセスが終了しない
-- **影響**: ゾンビプロセスの残留、リソースリーク
-- **解決策**: stdin 終了イベントを監視して process.exit() する
+### AP-002: stdin MCP 
+- ****: MCP
+- ****: 
+- ****: stdin  process.exit() 
 
 ```typescript
-// ✅ 必須パターン
+//  
 process.stdin.on('end', () => process.exit(0));
 process.stdin.on('close', () => process.exit(0));
 ```
 
 ---
 
-## セキュリティ
+## 
 
-### AP-003: シークレットのハードコード
-- **問題**: トークン、パスワード等がソースコードに直接記載されている
-- **影響**: GitHub Push Protection でブロック、漏洩リスク
-- **解決策**: 環境変数経由で渡す
+### AP-003: 
+- ****: 
+- ****: GitHub Push Protection 
+- ****: 
 
 ```typescript
-// ❌ 悪い例
-const token = "MTQ2MzA0ODM3..."; // ハードコード
+//  
+const token = "MTQ2MzA0ODM3..."; // 
 
-// ✅ 良い例
+//  
 const token = process.env.DISCORD_BOT_TOKEN;
 ```
 
 ---
 
-## ロギング
+## 
 
-### AP-004: ログパスの分散
-- **問題**: デバッグログのパスが複数箇所にハードコードされている
-- **影響**: 変更時の修正漏れ、不整合
-- **解決策**: ヘルパー関数または定数で一元管理
+### AP-004: 
+- ****: 
+- ****: 
+- ****: 
 
 ```typescript
-// ✅ 良い例
+//  
 const CONFIG = {
   debugLogPath: '/tmp/app_debug.log',
 } as const;
@@ -84,34 +84,34 @@ function debugLog(message: string): void {
 
 ---
 
-## パス・環境依存
+## 
 
-### AP-005: Absolute Path Hardcoding (絶対パスのハードコード)
-- **問題**: ソースコード、設定ファイル、または起動スクリプト内に `/home/user/...` といった特定の環境に依存する絶対パスが直接記述されている
-- **影響**: 開発者間やCI環境、サーバー移行時に動作しなくなる（ポータビリティの欠如）。設定ファイル（`mcp_config.json` 等）の修正漏れが発生する。
-- **解決策**:
-  - **環境変数での一元管理**: ルートの `.env` で `MCP_ROOT` 等を定義し、各所から参照する。**ただし、.env 内の値も可能な限りプロジェクトルートからの相対パス（例: `./admin`）にする。**
-  - **相対パス解決**: 実行スクリプトの位置を基準にパスを動的に解決する。
-  - **構成の自動生成**: `.env` を元に設定ファイル（JSON）をスクリプトで自動生成する。**ジェネレータ自体も `Path(__file__)` 等を利用して自身の位置から動的に絶対パスを特定する。**
-  - **相対パスによるシンボリックリンク**: リンク作成時は絶対パスではなく、ターゲットまでの相対パス（例: `ln -s ./.config/... ./link`）を使用する。
+### AP-005: Absolute Path Hardcoding ()
+- ****:  `/home/user/...` 
+- ****: CI`mcp_config.json` 
+- ****:
+  - ****:  `.env`  `MCP_ROOT` **.env : `./admin`**
+  - ****: 
+  - ****: `.env` JSON** `Path(__file__)` **
+  - ****: : `ln -s ./.config/... ./link`
 
 > [!WARNING]
-> **「外部化」と「相対化」の混同に注意**
-> 絶対パスを設定ファイル（.env 等）に移動しただけでは、ハードコードの場所が移っただけで「ポータビリティ」は改善されていません。移動に強い構成にするには「相対パス」または「動的解決」が不可欠です。
+> ****
+> .env 
 
 ```python
-# ✅ Python: pathlib を使用
+#  Python: pathlib 
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 ```
 
 ```typescript
-// ✅ Node.js: process.env または path.resolve を使用
+//  Node.js: process.env  path.resolve 
 const root = process.env.MCP_ROOT || path.join(__dirname, '..');
 ```
 
 ```bash
-# ✅ Shell: スクリプトの位置を取得して相対解決
+#  Shell: 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 BUILD_PATH="${SCRIPT_DIR}/build/index.js"
 ```
@@ -120,220 +120,220 @@ BUILD_PATH="${SCRIPT_DIR}/build/index.js"
 
 ---
 
-## 設計・アーキテクチャ
+## 
 
-### AP-006: MCPハンドラーの密結合
-- **問題**: MCPサーバーインスタンス（`Server`）内、またはクラスのプライベートメソッドにすべてのロジックが直接記述されている。
-- **影響**: 
-  - `Server` インスタンスが必要な `executeRequest` 等の内部メソッドに依存し、単体テストが困難になる。
-  - テスト環境で SDK のモック化が必要になり、テストコードが複雑化する。
-- **解決策**:
-  - ツール実行ロジックをサーバーインスタンスから独立した非同期関数（例: `handleCallTool`）として定義・export する。
-  - 外部依存（DB接続、外部APIクライアント等）は引数として渡す。
+### AP-006: MCP
+- ****: MCP`Server`
+- ****: 
+  - `Server`  `executeRequest` 
+  -  SDK 
+- ****:
+  - : `handleCallTool`export 
+  - DBAPI
 
 
-### AP-007: 設定ディレクトリの手動構築
-- **問題**: エージェントが独自判断で `.gemini` ディレクトリや `GEMINI.md` をサブプロジェクト配下に手動で作成・構築する。
-- **影響**: 
-  - プロジェクト間でのルール不整合（Gitフックの動作不良等）が発生する。
-  - グローバルな司令塔（`gemini-core`）からの変更が反映されない。
-- **解決策**:
-  - 新規プロジェクト管理開始時は必ず `/join-gemini` ワークフローを使用する。
-  - プロジェクト固有の設定が必要な場合は、`GEMINI.md` の仕組みの範囲内で拡張する。
-
----
-
-## 運用・保守
-
-### AP-008: 実行時ディレクトリの欠落前提
-- **問題**: DB保存用ディレクトリ（`dbs/`, `storage/` 等）が最初から存在することを前提にしたコード・構成になっている。
-- **影響**: 
-  - OS再起動や環境移行後のクリーンな状態で、ディレクトリ不足による書き込みエラー（例: `TypeError: Cannot open database because the directory does not exist`）が発生する。
-- **解決策**:
-  - サーバー起動ロジック内で、必要なディレクトリの存否確認と自動生成を行う。
-  - または、空のディレクトリに `.gitkeep` を配置して Git 管理下に置く。
-
-### AP-009: 知見登録失敗の黙殺（長期記憶）
-- **問題**: `memory-server` への記憶保存がエラー（サーバー未起動、パス不備等）で失敗した際、それを無視して作業を続行する。
-- **影響**: 
-  - 重要な教訓やハマりどころが長期記憶に蓄積されず、将来の再発防止に繋がらない。
-- **解決策**:
-  - 記憶の保存に失敗した場合は、直ちに作業を停止し原因を解消するか、失敗した内容を一時ファイル（トラブルレポート等）に記録して、後から確実に登録する。
+### AP-007: 
+- ****:  `.gemini`  `GEMINI.md` 
+- ****: 
+  - Git
+  - `gemini-core`
+- ****:
+  -  `/join-gemini` 
+  - `GEMINI.md` 
 
 ---
 
-## データフロー
+## 
 
-### AP-010: Ambiguous Resource Auto-Selection (不透明な自動リソース選択)
-- **問題**: ファイル名やディレクトリ構造を走査し、最新のファイルを「推測（例: `max(files)`）」して処理の入力とする。
-- **影響**: 
-  - ファイル名の命名規則（アルファベット順 vs 数値順）の勘違いにより、意図しない古いデータが選ばれる。
-  - 処理が暗黙的になり、データフローの追跡が困難になる。
-- **解決策**:
-  - 生成元プロセスから生成先プロセスへ、ファイルパスを**明示的な引数（Data Relay）**として渡す。
-  - ファイルパスの不確実性を排除するインターフェース設計を行う。
+### AP-008: 
+- ****: DB`dbs/`, `storage/` 
+- ****: 
+  - OS: `TypeError: Cannot open database because the directory does not exist`
+- ****:
+  - 
+  -  `.gitkeep`  Git 
+
+### AP-009: 
+- ****: `memory-server` 
+- ****: 
+  - 
+- ****:
+  - 
+
+---
+
+## 
+
+### AP-010: Ambiguous Resource Auto-Selection ()
+- ****: : `max(files)`
+- ****: 
+  -  vs 
+  - 
+- ****:
+  - **Data Relay**
+  - 
 
 ```python
-# ❌ 悪い例: 暗黙のファイル探索
+#  : 
 files = glob.glob("data/output/*.csv")
-target = max(files)  # アルファベット順で weekly が daily に勝つ
+target = max(files)  #  weekly  daily 
 
-# ✅ 良い例: 明示的なパスリレー
+#  : 
 report_paths = reporter.generate_reports(results)  # {"summary": Path, "detailed": Path}
 tools.export_to_sheets(csv_path=str(report_paths["summary"]))
 ```
 
-### AP-011: Truthless Success Notification (不実な完了通知)
-- **問題**: サブプロセス（アップロード、連携など）が失敗しているにもかかわらず、メインプロセスが終了したことのみをもって「✅ 成功」として通知する。
-- **影響**: 
-  - ユーザーが不具合（データの未更新等）に気づくのが遅れる。
-  - システムが「正常」を装うため、信頼性が損なわれる。
-- **解決策**:
-  - 処理の全ステップの結果を収集（Error Tracking）し、一つでも例外や警告があれば「⚠️ Partial Success（一部失敗）」等のステータスで通知する。
-  - 通知の色やタイトルをステータスに応じて動的に変更する。
+### AP-011: Truthless Success Notification ()
+- ****:  
+- ****: 
+  - 
+  - 
+- ****:
+  - Error Tracking Partial Success
+  - 
 
 ```python
-# ❌ 悪い例: 例外を握りつぶして成功通知
+#  : 
 try:
     upload_to_drive(file)
 except Exception:
-    pass  # 失敗を無視
-notifier.notify_success(mode)  # 常に成功
+    pass  # 
+notifier.notify_success(mode)  # 
 
-# ✅ 良い例: Error Tracking の活用
+#  : Error Tracking 
 try:
     upload_to_drive(file)
 except Exception as e:
-    context.add_error(f"Upload failed: {e}")  # エラーを記録
+    context.add_error(f"Upload failed: {e}")  # 
 notifier.notify_success(mode, has_error=context.has_partial_failure)
 ```
 
-### AP-012: Language-Tool Mismatch (言語とツールの不一致)
-- **問題**: プロジェクトの主要言語と異なるエコシステムのツール（例: Python プロジェクトに ESLint、TypeScript プロジェクトに ruff）を実行する。
-- **影響**: 
-  - ツールが対象言語を解析できず、永久にハングまたは無意味な結果を返す。
-  - 実行時間が無限に浪費される（実例: 2時間近くハングした `npx eslint *.py`）。
-- **解決策**:
-  - プロジェクトの `pyproject.toml` / `package.json` を確認し、対応するツールのみを使用する。
-  - **Python** → `ruff`, `black`, `mypy`, `pytest`
-  - **TypeScript/JavaScript** → `eslint`, `prettier`, `tsc`, `jest`/`vitest`
-  - ツール実行前に対象ファイルの拡張子を確認するガードを設ける。
+### AP-012: Language-Tool Mismatch ()
+- ****: : Python  ESLintTypeScript  ruff
+- ****: 
+  - 
+  - : 2 `npx eslint *.py`
+- ****:
+  -  `pyproject.toml` / `package.json` 
+  - **Python**  `ruff`, `black`, `mypy`, `pytest`
+  - **TypeScript/JavaScript**  `eslint`, `prettier`, `tsc`, `jest`/`vitest`
+  - 
 
 > [!CAUTION]
-> **`.py` ファイルに `eslint` を、`.ts` ファイルに `ruff` を実行してはならない。**
-> ツールがハングし、数時間のリソース浪費を招く。
+> **`.py`  `eslint` `.ts`  `ruff` **
+> 
 
-## 環境・リソース管理
+## 
 
-### AP-013: 実行環境への暗黙的依存 (Implicit Environment Dependency)
-- **問題**: `requirements.txt` に未記載のライブラリが偶然インストールされていたため動作していたが、環境再構築時に動作不能になる。
-- **影響**: 環境移行やCIでのビルド失敗。「昨日まで動いていた」現象の発生。
-- **解決策**:
-  - `requirements.txt` への完全な記載。
-  - テスト時の自動インポート監査による「環境の自己診断」。
+### AP-013:  (Implicit Environment Dependency)
+- ****: `requirements.txt` 
+- ****: CI
+- ****:
+  - `requirements.txt` 
+  - 
 
-### AP-014: 名前ベースの外部リソース解決 (Ambiguous Resource Resolution)
-- **問題**: クラウド上のリソース（DB, ストレージ, フォルダ）を「名前」で検索・特定している。
-- **影響**: 同名の別リソース（個人のMy Drive等）へ誤出力し、情報漏洩やデータ消失のリスクがある。
-- **解決策**:
-  - リソースは名前ではなく「一意のID」で解決することを原則とする。
-  - 名前検索はIDが不明な場合のフォールバック（かつ警告付き）に留める。
+### AP-014:  (Ambiguous Resource Resolution)
+- ****: DB, , 
+- ****: My Drive
+- ****:
+  - ID
+  - ID
 
-### AP-015: テスト時のブロッキング待機 (Blocking Retries in Tests)
-- **問題**: `tenacity` 等のリトライロジックでデフォルトの待機時間（`min=5`秒など）がテスト実行時にも有効になっている。
-- **影響**: 並列実行(`pytest-xdist`)時にスレッドをブロックし、テスト全体のハングアップや実行時間の肥大化を招く。
-- **解決策**:
-  - テスト環境では `time.sleep` をモック化するか、待機時間ゼロの設定を注入する。
+### AP-015:  (Blocking Retries in Tests)
+- ****: `tenacity` `min=5`
+- ****: (`pytest-xdist`)
+- ****:
+  -  `time.sleep` 
 
-## コマンド実行
+## 
 
-### AP-016: Chained Command Execution (コマンドの数珠繋ぎ実行)
-- **問題**: `&&`, `;`, `|` を多用し、複数の重い処理を1行のコマンドラインで一気に実行する。
-- **影響**: 
-  - 途中でハングアップした際、どのコマンドが原因か特定できない。
-  - ゾンビプロセスが大量に発生し、後続のリカバリを困難にする。
-- **解決策**:
-  - コマンドは原則として1ステップずつ分割して実行する。
-  - 依存関係がある場合は、ステップごとに `command_status` で成功を確認してから次へ進む。
+### AP-016: Chained Command Execution ()
+- ****: `&&`, `;`, `|` 1
+- ****: 
+  - 
+  - 
+- ****:
+  - 1
+  -  `command_status` 
 
-### AP-017: Unchecked Process State (プロセス状態の未確認)
-- **問題**: `git`, `npm`, `python` 等のステートフルなコマンドを実行する前に、同名の既存プロセス（ゾンビ）が残っていないか確認せずに実行する。
-- **影響**: 
-  - ロックファイル競合（`index.lock`等）やポート競合が発生し、コマンドが即死またはハングする。
-  - 「何もしていないのに動かない」状況を作り出す。
-- **解決策**:
-  - 重要なコマンドの実行前には、`pgrep` / `pkill` 等でクリーンな状態を保証する守備的な手順を組む。
-  - `safe_commander` スキルを活用する。
+### AP-017: Unchecked Process State ()
+- ****: `git`, `npm`, `python` 
+- ****: 
+  - `index.lock`
+  - 
+- ****:
+  - `pgrep` / `pkill` 
+  - `safe_commander` 
 
-### AP-018: Infinite Block (無限ブロック)
-- **問題**: ネットワークタイムアウトや入力待ちにより、コマンドが永遠に制御を返さない。
-- **影響**: エージェント（または自動化スクリプト）が完全に停止し、手動介入以外で復旧できなくなる。
-- **解決策**:
-  - `timeout -k 5s 300s command` のように、必ず上限時間を設ける。
-  - バックグラウンド実行(`&`)は「投げっぱなし」になりがちなので、制御が必要な場合は `timeout` を優先する。
+### AP-018: Infinite Block ()
+- ****: 
+- ****: 
+- ****:
+  - `timeout -k 5s 300s command` 
+  - (`&`) `timeout` 
 
 ---
 
-## 設定同期
+## 
 
-### AP-019: MCP設定ファイルの二重管理 (Divergent MCP Config)
-- **問題**: MCP設定ファイル (`mcp_config.json`) がリポジトリ側（`mcp-servers/`）とIDE側（`~/.gemini/antigravity/`）の2箇所に独立して存在し、それぞれが異なるタイミングで更新される。
-- **影響**: 
-  - ディレクトリ移行やサーバー追加時に片方のみ更新され、パスやサーバー名がずれる。
-  - IDEリロード後にMCPサーバーが接続できない「壊れた状態」が発生する。
-  - 原因特定に時間がかかる（設定ファイルが2箇所あることを知らないと気づけない）。
-- **解決策**:
-  - **マスター（唯一の正解）を1つに定義する**: `mcp-servers/mcp_config.json` をマスターとする。
-  - **同期の自動化**: `/sync-gemini` ワークフロー実行時にマスターからIDE側へ自動コピーする。
-  - **直接編集の禁止**: IDE側の設定ファイルを直接編集しない。変更は必ずマスター側で行う。
+### AP-019: MCP (Divergent MCP Config)
+- ****: MCP (`mcp_config.json`) `mcp-servers/`IDE`~/.gemini/antigravity/`2
+- ****: 
+  - 
+  - IDEMCP
+  - 2
+- ****:
+  - **1**: `mcp-servers/mcp_config.json` 
+  - ****: `/sync-gemini` IDE
+  - ****: IDE
 
 > [!CAUTION]
-> **MCP設定の変更は必ず `mcp-servers/mcp_config.json`（マスター）で行うこと。** IDE側の設定ファイルは `/sync-gemini` で自動生成される派生物であり、直接編集は次回同期時に上書きされる。
+> **MCP `mcp-servers/mcp_config.json`** IDE `/sync-gemini` 
 
 ---
 
-## コマンド実行（高度なセキュリティ）
+## 
 
 ### AP-020: String-Based Command Execution (shell=True)
-- **問題**: コマンドライン全体を 1 つの文字列として評価・実行する。
-- **影響**: ユーザー入力や変数にシェルメタ文字（`;`, `&`, `|`）が含まれていた場合、意図しない第 2 のコマンドが連鎖的に実行される（OSコマンド注入）。
-- **解決策**:
-  - 引数リスト（`List[str]`）形式で `execve` を直接呼び出す（`shell=False`）。
-  - 文字列評価を物理的に排除する。
+- ****:  1 
+- ****: `;`, `&`, `|` 2 OS
+- ****:
+  - `List[str]` `execve` `shell=False`
+  - 
 
-### AP-021: find Result Piping (findの結果をパイプで渡す)
-- **問題**: `find . -name "*.log" | xargs rm` のように、find の出力をパイプで別コマンドに渡す。
-- **影響**: ファイル名にスペースや特殊文字が含まれる場合に誤動作する。また、特定の環境（特に AI エージェントの実行環境）においてパイプによる連鎖はハングアップのリスクが極めて高いことが観測されている。
-- **解決策**:
-  - find の `-exec` オプション（例: `find ... -exec rm {} +`）を使用する。
-  - アトミックかつ安全な単発コマンドとして完結させる。
+### AP-021: find Result Piping (find)
+- ****: `find . -name "*.log" | xargs rm` find 
+- ****:  AI 
+- ****:
+  - find  `-exec` : `find ... -exec rm {} +`
+  - 
 
-### AP-022: Sensory Isolation in Long-Running Tasks (感覚遮断)
-- **問題**: 長時間実行されるタスク（大規模ビルド、テスト等）に対し、実行コマンドのみを発行し、その終了を待つだけの設計（Request/Response 専用）。
-- **影響**: AI が「自分の今の状態」を観測できず、進捗が止まっているのか正常に動いているのか判断できなくなる。結果として、不要なキャンセルやコマンド連発を招く。
-- **解決策**:
-  - **Process Pair アーキテクチャ**: 実行用プロセスと、その状態（ログや進捗）を観測するチャネル（`get_process_status` 等）をペアで用意し、AI が能動的に「自分の身体」の状態を観測できるようにする。
+### AP-022: Sensory Isolation in Long-Running Tasks ()
+- ****: Request/Response 
+- ****: AI 
+- ****:
+  - **Process Pair **: `get_process_status` AI 
 
-### AP-023: Deep Nesting / Avoidance of Early Return (深いネストと早期リターンの回避)
-- **問題**: 条件分岐を入れ子（Nested Ifs）にし、メインの処理をインデントの深い位置に記述する。
-- **影響**: 
-    - **推論コスト（インテリジェンス・オーバーヘッド）の増大**: AI エージェントが文脈内の「前提条件（スタック）」を過剰に保持しなければならず、ハルシネーション（スコープ誤認）や修正漏れの原因となる。
-    - **コードの不透明化**: 正常系が埋もれ、例外条件が後出しになるため、人間・AI 双方にとってデバッグが困難になる。
-- **解決策**:
-    - **ガード節（Guard Clauses）の徹底**: 例外条件やバリデーションをメソッドの冒頭で評価し、即座に `return` または `continue` する。
-    - **論理スタックの平坦化**: ネストを 2 階層以内に抑え、メインのアルゴリズムが常に最も浅いインデントで実行されるように構成する。
+### AP-023: Deep Nesting / Avoidance of Early Return ()
+- ****: Nested Ifs
+- ****: 
+    - ****: AI 
+    - ****: AI 
+- ****:
+    - **Guard Clauses**:  `return`  `continue` 
+    - ****:  2 
 
 ```python
-# ❌ 悪い例: 深いネスト
+#  : 
 def process_data(data):
     if data is not None:
         if "user" in data:
             if data["user"].is_active:
-                # 本来の処理がここに来る
+                # 
                 return do_actual_work(data)
     return False
 
-# ✅ 良い例: 早期リターンによる平坦化
+#  : 
 def process_data(data):
     if not data or "user" not in data:
         return False
@@ -341,68 +341,68 @@ def process_data(data):
     if not data["user"].is_active:
         return False
         
-    # 本来の処理が最も浅い階層に現れる
+    # 
     return do_actual_work(data)
 ```
 
 ---
 
-## コマンド実行（規約遵守）
+## 
 
-### AP-024: Safe-Shell Evasion (Safe-Shell の回避)
-- **問題**: 慣れや「速度」を優先して、確立された安全層（Safe-Shell V2、マクロ、専用スキル）をバイパスし、生の `run_command` で直接的な操作を行う。
-- **影響**: 
-    - 実行証跡（Audit Trail）の消失。
-    - Tier 3 防御や自動環境変数注入（AUTO PYTHONPATH）の恩恵を喪失。
-    - ゾンビプロセスの発生や環境汚染のリスク増大。
-- **解決策**:
-    - 全てのシェル操作において、まず `safe-shell` ツール（`execute_safe`, `execute_macro` 等）が使用可能か検討する。
-    - 直接実行が必要な例外的なケースは、その理由を記録に残す。
+### AP-024: Safe-Shell Evasion (Safe-Shell )
+- ****: Safe-Shell V2 `run_command` 
+- ****: 
+    - Audit Trail
+    - Tier 3 AUTO PYTHONPATH
+    - 
+- ****:
+    -  `safe-shell` `execute_safe`, `execute_macro` 
+    - 
 
-### AP-025: Macro Environment Dependency (マクロの環境依存)
-- **問題**: マクロ定義内で `python3` や `npm` といった、システム `PATH` や実行時の不安定な環境変数に依存するコマンドを指定する。
-- **影響**: 
-    - Tier 3 などの隔離環境下でバイナリが見つからず、実行に失敗する。
-    - 意図しないバージョンのバイナリが実行される。
-- **解決策**:
-    - マクロの `cmd` には、必ず仮想環境やインストール先の**絶対パス**（例: `/home/irom/dev/project/venv/bin/python3`）を指定する。
-    - 環境依存を排除し、決定論的な実行環境を構築する。
+### AP-025: Macro Environment Dependency ()
+- ****:  `python3`  `npm`  `PATH` 
+- ****: 
+    - Tier 3 
+    - 
+- ****:
+    -  `cmd` ****: `/home/irom/dev/project/venv/bin/python3`
+    - 
 
-### AP-026: 実体のないデフォルト値指定 (False Truthiness in Dictionary Access)
-- **問題**: `dict.get(key, default)` において、キーが存在し値が `None` (`null`) の場合、デフォルト値が適用されず `None` が返される。
-- **影響**: 取得結果がイテラブル（リストや辞書）であることを期待しているコード（`for ... in ...` 等）で、`'NoneType' object is not iterable` エラーが発生し、プロセスが停止する。
-- **解決策**:
-  - `value = dict.get(key) or default` 形式を使用し、`None` の場合に確実にデフォルト値を評価させる。
-  - または、取得後に明示的な `None` チェックを行う。
+### AP-026:  (False Truthiness in Dictionary Access)
+- ****: `dict.get(key, default)`  `None` (`null`)  `None` 
+- ****: `for ... in ...` `'NoneType' object is not iterable` 
+- ****:
+  - `value = dict.get(key) or default` `None` 
+  -  `None` 
 
 ```python
-# ❌ 悪い例: None が返される可能性がある
+#  : None 
 template_args = macro.get("args", [])
-for arg in template_args:  # args が null の場合に死ぬ
+for arg in template_args:  # args  null 
     ...
 
-# ✅ 良い例: None を or で回避
+#  : None  or 
 template_args = macro.get("args") or []
-for arg in template_args:  # 確実にイテレート可能
+for arg in template_args:  # 
     ...
 ```
 
 ---
 
-## 更新履歴
+## 
 
-| 日付 | ID | 追加者 | 概要 |
+|  | ID |  |  |
 |------|-----|--------|------|
-| 2026-01-31 | AP-001〜004 | Agent | 初期登録（discord-server リファクタリングより） |
-| 2026-01-31 | AP-005 | Agent | 絶対パスのハードコード禁止 (inspect_db.py調査より) |
-| 2026-02-01 | AP-005 | Agent | .env 一元管理と自動設定生成パターンを追記 (mcp-servers 移行プロジェクトより) |
-| 2026-02-01 | AP-005 | Agent | 「外部化 vs 相対化」の注意点と相対シンボリックリンクについて追記 |
-| 2026-02-05 | AP-006〜009 | Agent | MCPハンドラー抽出、設定構築ルール、ディレクトリ生成、記憶登録失敗対応を追加 |
-| 2026-02-11 | AP-010〜012 | Agent | 不透明な自動リソース選択、不実な完了通知、言語ツール不一致を追加 |
-| 2026-02-11 | AP-013〜015 | Agent | 環境依存、リソース解決、テスト待機に関するアンチパターンを追加（project-stock2統合） |
-| 2026-02-11 | AP-016〜018 | Agent | コマンド連結禁止、プロセス状態確認、無限ブロックを追加（ハングアップ対策） |
-| 2026-02-12 | AP-019 | Agent | MCP設定ファイル二重管理の禁止を追加 |
-| 2026-02-23 | AP-020〜022 | Agent | shell=True禁止、findパイプ禁止、感覚遮断防止（Process Pair）を追加 |
-| 2026-02-23 | AP-023 | Agent | 深いネストと早期リターン回避の禁止（AI推論コスト対策）を追加 |
-| 2026-02-25 | AP-024〜025 | Agent | Safe-Shell 回避禁止、マクロ環境依存禁止を追加 |
-| 2026-02-26 | AP-026 | Agent | 実体のないデフォルト値指定（Noneイテレーション不具合）を追加 |
+| 2026-01-31 | AP-001004 | Agent | discord-server  |
+| 2026-01-31 | AP-005 | Agent |  (inspect_db.py) |
+| 2026-02-01 | AP-005 | Agent | .env  (mcp-servers ) |
+| 2026-02-01 | AP-005 | Agent |  vs  |
+| 2026-02-05 | AP-006009 | Agent | MCP |
+| 2026-02-11 | AP-010012 | Agent |  |
+| 2026-02-11 | AP-013015 | Agent | project-stock2 |
+| 2026-02-11 | AP-016018 | Agent |  |
+| 2026-02-12 | AP-019 | Agent | MCP |
+| 2026-02-23 | AP-020022 | Agent | shell=TruefindProcess Pair |
+| 2026-02-23 | AP-023 | Agent | AI |
+| 2026-02-25 | AP-024025 | Agent | Safe-Shell  |
+| 2026-02-26 | AP-026 | Agent | None |
