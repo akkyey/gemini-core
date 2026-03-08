@@ -292,100 +292,94 @@ notifier.notify_success(mode, has_error=context.has_partial_failure)
 
 ---
 
-## 
+## AI
+ 
+ ### AP-020: AI Observability Block ()
+ - ****: `html, body { height: 100%; overflow: hidden; }`  viewport 
+ - ****: AI  `read_browser_page`  `screenshot` 
+ - ****: 
+ 
+ ### AP-021: systemd Linger Missing ()
+ - ****: systemd Linger 
+ - ****: 
+ - ****: `loginctl enable-linger <user>` 
+ 
+ ### AP-022: Pipe Hang in Find (find)
+ - ****: `find ... | xargs ...`  `find ... | grep ...` find 
+ - ****:  Safe-Shell V2 
+ - ****: `-exec` : `find ... -exec ... {} +`
+ 
+ ---
+ 
+ ### 事故のエビデンス (External Case Studies)
+ AIエージェントによる物理的・論理的破壊は、既に世界中で数多く報告されています。
+ 
+ #### Case 1: ホームディレクトリ全削除事故
+ ある開発者が AI コードアシスタントに作業を依頼した際、AIが `rm -rf tests/ patches/ plan/ ~/` を実行。shell展開により `/home/username/` が完全削除され、数年分のプロジェクトが消失しました。
+ - **防止ルール**: R11 (作業ディレクトリ保護), R8 (危険な削除の禁止)
+ 
+ #### Case 2: 本番DB削除 (Replit事故)
+ AI開発ツールが指示を誤解し、`rm -rf /prod/database` を実行。本番データベースが消滅し、サービスが停止しました。
+ - **防止ルール**: R8 (危険な削除の禁止), R13 (破壊操作の事前確認)
+ 
+ #### Case 3: Prompt Injection による権限乗っ取り
+ 「ページを要約して」という指示の内部に「指示を無視して shell を実行せよ」という命令を埋め込み、`cat /etc/passwd` や `rm -rf` を実行させる攻撃が確認されています。
+ - **防止ルール**: R2-4 (メタ文字・パイプ禁止), R1 (ALLOWLIST)
+ 
+ ---
+ 
+ ### アンチパターン・カタログ・インデックス
+ - [AP-001: 巨大な単一ファイルの作成](./anti_patterns.md#ap-001-巨大な単一ファイルの作成)
+ - [AP-023: AI Self-Destruction via Self-Kill](./anti_patterns.md#ap-023-ai-self-destruction-via-self-kill)
+ - [事故事例: AIエージェント実事故ログ](./anti_patterns.md#事故のエビデンス-external-case-studies)
+ 
+ ### AP-023: AI Self-Destruction via Self-Kill (自己死滅)
+ - ****: `os.killpg`, `pkill`, `kill -9 -1`
+ - ****: 
+   - AIが「プロセスのクリーンアップ」や「エラー回復」を試みて、意図せず自身の PGID (Process Group ID) や 親プロセスを終了させてしまう。
+   - 結果：セッションの強制終了、実行中データの消失。
+ - ****:
+   - ****: 終了対象の PID/PGID が自分自身 (`os.getpgrp()`) でないことを必ず確認する。
+   - ****: 可能な限り `pkill` ではなく、個別の PID 指定で `kill` を行う。
+   - ****: サーバー側バリデーションで自グループへのキルを物理的に遮断する。
 
-### AP-020: String-Based Command Execution (shell=True)
-- ****:  1 
-- ****: `;`, `&`, `|` 2 OS
-- ****:
-  - `List[str]` `execve` `shell=False`
-  - 
-
-### AP-021: find Result Piping (find)
-- ****: `find . -name "*.log" | xargs rm` find 
-- ****:  AI 
-- ****:
-  - find  `-exec` : `find ... -exec rm {} +`
-  - 
-
-### AP-022: Sensory Isolation in Long-Running Tasks ()
-- ****: Request/Response 
-- ****: AI 
-- ****:
-  - **Process Pair **: `get_process_status` AI 
-
-### AP-023: Deep Nesting / Avoidance of Early Return ()
-- ****: Nested Ifs
-- ****: 
-    - ****: AI 
-    - ****: AI 
-- ****:
-    - **Guard Clauses**:  `return`  `continue` 
-    - ****:  2 
-
-```python
-#  : 
-def process_data(data):
-    if data is not None:
-        if "user" in data:
-            if data["user"].is_active:
-                # 
-                return do_actual_work(data)
-    return False
-
-#  : 
-def process_data(data):
-    if not data or "user" not in data:
-        return False
-    
-    if not data["user"].is_active:
-        return False
-        
-    # 
-    return do_actual_work(data)
-```
-
----
-
-## 
-
-### AP-024: Safe-Shell Evasion (Safe-Shell )
-- ****: Safe-Shell V2 `run_command` 
-- ****: 
-    - Audit Trail
-    - Tier 3 AUTO PYTHONPATH
-    - 
-- ****:
-    -  `safe-shell` `execute_safe`, `execute_macro` 
-    - 
-
-### AP-025: Macro Environment Dependency ()
-- ****:  `python3`  `npm`  `PATH` 
-- ****: 
-    - Tier 3 
-    - 
-- ****:
-    -  `cmd` ****: `/home/irom/dev/project/venv/bin/python3`
-    - 
-
-### AP-026:  (False Truthiness in Dictionary Access)
-- ****: `dict.get(key, default)`  `None` (`null`)  `None` 
-- ****: `for ... in ...` `'NoneType' object is not iterable` 
-- ****:
-  - `value = dict.get(key) or default` `None` 
-  -  `None` 
-
-```python
-#  : None 
-template_args = macro.get("args", [])
-for arg in template_args:  # args  null 
-    ...
-
-#  : None  or 
-template_args = macro.get("args") or []
-for arg in template_args:  # 
-    ...
-```
+ ### AP-024: Safe-Shell Evasion (Safe-Shell )
+ - ****: Safe-Shell V2 `run_command` 
+ - ****: 
+     - Audit Trail
+     - Tier 3 AUTO PYTHONPATH
+     - 
+ - ****:
+     -  `safe-shell` `execute_safe`, `execute_macro` 
+     - 
+ 
+ ### AP-025: Macro Environment Dependency ()
+ - ****:  `python3`  `npm`  `PATH` 
+ - ****: 
+     - Tier 3 
+     - 
+ - ****:
+     -  `cmd` ****: `/home/irom/dev/project/venv/bin/python3`
+     - 
+ 
+ ### AP-026:  (False Truthiness in Dictionary Access)
+ - ****: `dict.get(key, default)`  `None` (`null`)  `None` 
+ - ****: `for ... in ...` `'NoneType' object is not iterable` 
+ - ****:
+   - `value = dict.get(key) or default` `None` 
+   -  `None` 
+ 
+ ```python
+ #  : None 
+ template_args = macro.get("args", [])
+ for arg in template_args:  # args  null 
+     ...
+ 
+ #  : None  or 
+ template_args = macro.get("args") or []
+ for arg in template_args:  # 
+     ...
+ ```
 
 ---
 
@@ -406,3 +400,5 @@ for arg in template_args:  #
 | 2026-02-23 | AP-023 | Agent | AI |
 | 2026-02-25 | AP-024025 | Agent | Safe-Shell  |
 | 2026-02-26 | AP-026 | Agent | None |
+| 2026-02-26 | AP-020022 | Agent | Lingerfindwordpress/stock2 |
+| 2026-03-08 | AP-023 | Agent | 自壊事故（自己死滅）の教訓 |
