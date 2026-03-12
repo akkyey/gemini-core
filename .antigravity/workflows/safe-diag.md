@@ -1,5 +1,5 @@
 ---
-description:  Safe-Shell V2 
+description: Safe-Shell V2
 ---
 
 `self_diagnostic.py`  `pytest` `safe-shell-server` 

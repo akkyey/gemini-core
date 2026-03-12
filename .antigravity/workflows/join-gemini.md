@@ -1,5 +1,5 @@
 ---
-description: Gemini
+description: "Gemini"
 ---
 
 #  (Join Gemini)

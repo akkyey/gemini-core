@@ -1,5 +1,5 @@
 ---
-description: Git
+description: Gitステータス一括確認
 ---
 
 #  Git

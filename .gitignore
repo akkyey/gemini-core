@@ -44,3 +44,18 @@ verification_state.json
 cache/
 
 
+
+# 写像系規約ファイル（gemini-coreが正典）
+GEMINI.md
+.antigravityrules
+anti_patterns.md
+
+# 写像系規約ファイル（gemini-coreが正典）
+.agent/workflows
+
+# 写像系規約ファイル（gemini-coreが正典）
+.agent/skills
+
+# 写像系規約ファイル（gemini-coreが正典）
+.agents/workflows
+.agents/skills

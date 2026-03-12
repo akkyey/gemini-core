@@ -1,5 +1,5 @@
 ---
-description:  Safe-Shell V2 
+description: Safe-Shell V2
 ---
 
 5 Safe-Shell Execve / Isolation / Persistence

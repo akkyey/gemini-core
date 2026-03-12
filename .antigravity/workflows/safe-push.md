@@ -1,5 +1,5 @@
 ---
-description: Safe-Shell V2 
+description: Safe-Shell V2
 ---
 
 `GEMINI.md` `safe_commander`  `safe-shell-server` 
