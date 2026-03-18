@@ -59,3 +59,10 @@ anti_patterns.md
 # 写像系規約ファイル（gemini-coreが正典）
 .agents/workflows
 .agents/skills
+
+# Documentation centralization
+docs
+full-context
+*_full_context.md
+blog
+ideas
