@@ -120,6 +120,9 @@ def broadcast():
             target_dir = project_path / agent_dir_name / sub_dir
 
             if source_dir.exists():
+                if source_dir.resolve() == target_dir.resolve():
+                    print(f"   ℹ️  .agents/{sub_dir} is source (skipping self-copy)")
+                    continue
                 print(f"   🤖 Syncing agent {sub_dir}...")
                 shutil.copytree(source_dir, target_dir, dirs_exist_ok=True)
                 print(f"   ✅ .agents/{sub_dir} synced")
