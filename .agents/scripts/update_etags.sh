@@ -3,3 +3,10 @@
 # -maxdepth 4 で主要ファイルをカバーし、隠しファイルやvenv等を除外
 find . -maxdepth 4 -not -path '*/.*' -not -path './venv*' -not -path './node_modules*' -printf "%M %n %u %g %s %TY-%Tm-%Td %TT %p\n" > etags_snapshot.txt
 echo "✅ etags_snapshot.txt generated."
+python3 generate_etags.py
+
+# MCP Server Startup Validation
+echo "Validating safe-shell-server startup..."
+cd ../mcp-servers/safe-shell-server
+PYTHONPATH=src python3 -c "from safe_shell_server.server import mcp; print('Startup validation successful.')" || { echo "ERROR: safe-shell-server failed to start!"; exit 1; }
+cd - > /dev/null

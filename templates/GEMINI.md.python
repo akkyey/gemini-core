@@ -53,7 +53,7 @@
 1.  **Gitコマンドの直接実行禁止 (No Direct Git Execution):**
     *   `run_command` 等を使って `git` コマンドを直接実行してはならない。必ず `safe-shell` MCP または `git_committer` スキル準拠のマクロを経由すること。
     *   **決定的な品質ゲート:** 診断時はタイムスタンプ等の非本質的な差分を無視（`git diff -I`）し、純粋なコード品質で判断すること。
-    *   **マルチリポジトリ同期:** サブモジュール構成では、ルート診断前に全リポジトリをステージング状態にして整合性を確保すること。
+    *   **リポジトリ構成:** 本プロジェクトはモノリポジトリ構成（`mcp-servers` 等）を採用している。新機能は適切なクラスター（`brain-mcp`, `utility-mcp` 等）配下に実装し、サブモジュールへの過度な依存を避けること。
 2.  **シェルコマンドの直接実行禁止 (No Direct Shell Execution):**
     *   通常のシェルコマンド（`ls`, `grep`, `pytest` 等）を実行する際は、原則として `safe-shell` ツール（`mcp-safe-shell-server`）を使用すること。
     *   `run_command` は、対話的入力が必要な場合や `safe-shell` で実行不可能な場合にのみ、例外的に使用を許可する。
@@ -84,17 +84,16 @@
 
 ---
 
-## 4. 長期記憶の管理 (Memory Management)
+## 4. 長期記憶とステートの管理 (Memory & State Management)
 
-本プロジェクトでは、`memory-server` を使用して、プロジェクト固有の知見やユーザーの好みを永続化する。
+本プロジェクトでは、`brain-mcp` クラスターを使用して、知見の永続化とセッション状態の管理を行う。
 
-1.  **知見のインポート (Sync-In):**
-    *   作業開始時、または環境構築時には、必ず `memory-server.import_memories` ツールを使用して `.agent/memory/memory_dump.json` から知見を読み込むこと。
-2.  **記憶の記録 (Memory Creation):**
-    *   重要な設計判断、特定のエラーへの対処法、ユーザーからの重要なフィードバック、またはプロジェクト固有の命名規則などを発見・決定した際は、積極的に `memory-server.create_memory` で記録すること。
-3.  **知見のエクスポート (Sync-Out):**
-    *   作業完了（コミット）前には、必ず `memory-server.export_memories` を実行し、`.agent/memory/memory_dump.json` を最新状態に更新すること。
-    *   これにより、知見がバージョン管理され、他の環境でも共有可能となる。
+1.  **記憶の記録 (Memory Creation):**
+    *   重要な設計判断、エラー対処法、ユーザーの好み、独自の命名規則などを発見・決定した際は、必ず `brain_manage_memory(action="add", content=...)` を使用して記録すること。
+2.  **ステートの保存 (State Sync):**
+    *   タスクの各段階、または作業中断前には、`brain_save_session_state` を実行し、現在の計画・進捗・アクティブファイルを DB と `.gemini/session_state.json` の両方に同期すること。
+3.  **プロセスの健全性 (Process Scavenging):**
+    *   作業開始時やリソース不足を感じた際は、`brain_scavenge_resources` (Scavenger V2) を実行し、無用な孤立プロセスを排除してクリーンな実行環境を維持すること。
 
 ---
 
