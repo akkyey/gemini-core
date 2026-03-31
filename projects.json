@@ -8,5 +8,7 @@
     "antigravity-log-manager",
     "neuromancer",
     "p-scouter",
-    "qiita"
+    "qiita",
+    "safe-shell-sentinel",
+    "safe-shell-classic"
 ]
