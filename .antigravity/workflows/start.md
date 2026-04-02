@@ -17,7 +17,7 @@ description: セッション開始の統合処理（Sync, Load State, Context Re
 ### 1. 職責の自己監査 (Initial Audit)
 ```bash
 # 🤖 【スキル発動】 design_validator
-# 🛡️ 常に safe-shell-server (execute_safe) を経由してコマンドを実行してください。
+# 🛡️ 常に safe-shell (execute_safe) を経由してコマンドを実行してください。
 # 前回のコンテキストや ADR が現在の状況と一致しているかを自己監査。
 ```
 

@@ -2,10 +2,10 @@
 description: Safe-Shell V2
 ---
 
-`GEMINI.md` `safe_commander`  `safe-shell-server` 
+`GEMINI.md` `safe_commander`  `safe-shell` 
 
 ## 
-- `safe-shell-server` 
+- `safe-shell` 
 - 
 
 ## 

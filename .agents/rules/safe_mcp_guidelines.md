@@ -20,4 +20,4 @@
 - **git-task-server**: コミット、プッシュ、PR作成。
 - **gdrive-server**: ドキュメントの読み書き、ファイル管理。
 - **memory-server**: 長期記憶の保存と検索。
-- **safe-shell-server**: 安全なシェルコマンド実行（隔離環境）。
+- **safe-shell**: 安全なシェルコマンド実行（隔離環境）。

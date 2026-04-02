@@ -55,7 +55,7 @@
     *   **決定的な品質ゲート:** 診断時はタイムスタンプ等の非本質的な差分を無視（`git diff -I`）し、純粋なコード品質で判断すること。
     *   **リポジトリ構成:** 本プロジェクトはモノリポジトリ構成（`mcp-servers` 等）を採用している。新機能は適切なクラスター（`brain-mcp`, `utility-mcp` 等）配下に実装し、サブモジュールへの過度な依存を避けること。
 2.  **シェルコマンドの直接実行禁止 (No Direct Shell Execution):**
-    *   通常のシェルコマンド（`ls`, `grep`, `pytest` 等）を実行する際は、原則として `safe-shell` ツール（`mcp-safe-shell-server`）を使用すること。
+    *   通常のシェルコマンド（`ls`, `grep`, `pytest` 等）を実行する際は、原則として `safe-shell` ツール（`safe-shell`）を使用すること。
     *   `run_command` は、対話的入力が必要な場合や `safe-shell` で実行不可能な場合にのみ、例外的に使用を許可する。
 3.  **診断スキップの禁止 (No Skipping Diagnostics):**
     *   コミット前に `self_diagnostic.py` の実行を省略してはならない。「軽微な修正だから大丈夫」という判断は認められない。
