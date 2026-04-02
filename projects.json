@@ -9,6 +9,12 @@
     "neuromancer",
     "p-scouter",
     "qiita",
-    "safe-shell",
-    "safe-shell-classic"
+    {
+        "id": "safe-shell",
+        "path": "mcp-servers/safe-shell"
+    },
+    {
+        "id": "safe-shell-classic",
+        "path": "mcp-servers/safe-shell-classic"
+    }
 ]
