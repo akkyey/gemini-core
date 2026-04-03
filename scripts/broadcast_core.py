@@ -31,8 +31,8 @@ class FileSystem:
     def copy2(self, src: Path, dest: Path):
         shutil.copy2(src, dest)
 
-    def copytree(self, src: Path, dest: Path):
-        shutil.copytree(src, dest, dirs_exist_ok=True)
+    def copytree(self, src: Path, dest: Path, ignore=None):
+        shutil.copytree(src, dest, dirs_exist_ok=True, ignore=ignore)
 
     def read_text(self, path: Path) -> str:
         return path.read_text()
@@ -54,7 +54,10 @@ class Broadcaster:
     def __init__(self, fs: FileSystem, dry_run: bool = False):
         self.fs = fs
         self.dry_run = dry_run
+        # 管理対象ファイル群（規約の物理写像）
         self.managed_files = ["GEMINI.md", ".antigravityrules", "anti_patterns.md"]
+        # 管理対象ディレクトリ（規約・政策エンジン）
+        self.managed_dirs = ["policy"]
 
     def _log_action(self, msg: str):
         prefix = "[DRY-RUN] " if self.dry_run else ""
@@ -71,7 +74,8 @@ class Broadcaster:
 
         content = self.fs.read_text(gitignore_path) if self.fs.exists(gitignore_path) else ""
 
-        new_entries = [f for f in self.managed_files if f not in content]
+        all_managed = self.managed_files + self.managed_dirs
+        new_entries = [f for f in all_managed if f not in content]
 
         if new_entries:
             self._log_action(f"   📝 Updating .gitignore in {project_path.name} (Adding: {', '.join(new_entries)})")
@@ -87,16 +91,16 @@ class Broadcaster:
         if not self.fs.exists(project_path / ".git"):
             return
 
-        for file_name in self.managed_files:
+        for entry in self.managed_files + self.managed_dirs:
             try:
-                # ファイルが Git の追跡対象か確認
-                result = self.fs.run_command(["git", "ls-files", "--error-unmatch", file_name], project_path)
+                # ファイル/ディレクトリが Git の追跡対象か確認
+                result = self.fs.run_command(["git", "ls-files", "--error-unmatch", entry], project_path)
                 if result.returncode == 0:
-                    self._log_action(f"   🧹 Untracking managed file: {file_name}")
+                    self._log_action(f"   🧹 Untracking managed entry: {entry}")
                     if not self.dry_run:
-                        self.fs.run_command(["git", "rm", "--cached", file_name], project_path)
+                        self.fs.run_command(["git", "rm", "-rf", "--cached", entry], project_path)
             except Exception as e:
-                print(f"   ⚠️  Warning: Failed to unstage {file_name} in {project_path.name}: {e}")
+                print(f"   ⚠️  Warning: Failed to unstage {entry} in {project_path.name}: {e}")
 
     def sync_project(self, p_id: str, project_path: Path, docs_root: Path):
         """単一プロジェクトの同期を実行"""
@@ -127,7 +131,25 @@ class Broadcaster:
             if not self.dry_run:
                 self.fs.copy2(master_source, target_path)
 
-        # 3. エージェントスキルとワークフローの同期 (.agents/)
+        # 3. 規約ディレクトリ (policy/) の同期
+        for dir_name in self.managed_dirs:
+            source_dir = docs_root / dir_name
+            target_dir = project_path / dir_name
+            
+            if self.fs.exists(source_dir):
+                # 自身へのコピーを防止
+                try:
+                    if source_dir.resolve() == target_dir.resolve():
+                        continue
+                except: pass
+
+                self._log_action(f"   📂 Syncing dir: {dir_name} (excluding project-context.yaml)")
+                if not self.dry_run:
+                    # project-context.yaml (原点アンカー) を除外して同期
+                    self.fs.copytree(source_dir, target_dir, 
+                                    ignore=shutil.ignore_patterns("project-context.yaml"))
+
+        # 4. エージェントスキルとワークフローの同期 (.agents/)
         agent_dir_name = ".agents"
         for sub_dir in ["skills", "workflows"]:
             source_dir = docs_root / agent_dir_name / sub_dir
