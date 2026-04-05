@@ -102,7 +102,7 @@ class Broadcaster:
             except Exception as e:
                 print(f"   ⚠️  Warning: Failed to unstage {entry} in {project_path.name}: {e}")
 
-    def sync_project(self, p_id: str, project_path: Path, docs_root: Path):
+    def sync_project(self, p_id: str, project_path: Path, docs_root: Path, core_root: Path):
         """単一プロジェクトの同期を実行"""
         self._log_action(f"📦 Syncing to: {p_id}")
 
@@ -150,9 +150,10 @@ class Broadcaster:
                                     ignore=shutil.ignore_patterns("project-context.yaml"))
 
         # 4. エージェントスキルとワークフローの同期 (.agents/)
+        # ⚠️ 実行レイヤ (Workflows/Skills) の主権は gemini-core に移行
         agent_dir_name = ".agents"
         for sub_dir in ["skills", "workflows"]:
-            source_dir = docs_root / agent_dir_name / sub_dir
+            source_dir = core_root / agent_dir_name / sub_dir
             target_dir = project_path / agent_dir_name / sub_dir
 
             if self.fs.exists(source_dir):
@@ -171,9 +172,9 @@ class Broadcaster:
         if not self.dry_run:
             time.sleep(0.5)
 
-    def run(self, projects: list, dev_root: Path, docs_root: Path):
+    def run(self, projects: list, dev_root: Path, docs_root: Path, core_root: Path):
         """全プロジェクトの同期を開始"""
-        print(f"🚀 Broadcaster: Syncing Master Rules from {docs_root}")
+        print(f"🚀 Broadcaster: Syncing Master (Rules: {docs_root}, Agents: {core_root})")
         if self.dry_run:
             print("🛡️  Dry-run mode enabled. No physical changes will be made.")
 
@@ -190,7 +191,7 @@ class Broadcaster:
                 print(f"⚠️  Skipping missing project: {p_id} (Attempted path: {project_path})")
                 continue
 
-            self.sync_project(p_id, project_path, docs_root)
+            self.sync_project(p_id, project_path, docs_root, core_root)
 
         print("\n✅ Broadcast operation complete.")
 
@@ -214,7 +215,7 @@ def broadcast():
 
     fs = FileSystem()
     broadcaster = Broadcaster(fs, dry_run=args.dry_run)
-    broadcaster.run(projects, dev_root, docs_root)
+    broadcaster.run(projects, dev_root, docs_root, core_root)
 
 
 if __name__ == "__main__":
